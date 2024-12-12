@@ -6,7 +6,7 @@ namespace StageApp
 {
     public class MerakiDbDbContext : DbContext
     {
-        public DbSet<Organization> Organizations { get; set; }
+        public DbSet<Organisation> Organisations { get; set; }
         public DbSet<Models.Device> Devices { get; set; }
         public DbSet<Location> Locations { get; set; }
         public DbSet<DeviceBackup> DeviceBackups { get; set; }
@@ -19,7 +19,7 @@ namespace StageApp
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Organization>().HasKey(o => o.Id);
+            modelBuilder.Entity<Organisation>().HasKey(o => o.Id);
             modelBuilder.Entity<Models.Device>().HasKey(d => d.SerialNumber);
             modelBuilder.Entity<Location>().HasKey(l => l.Id);
             modelBuilder.Entity<DeviceBackup>().HasKey(b => b.Id);

@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using Meraki.Api.Data;
+using StageApp.Models;
+using System.Text;
 
 namespace StageApp.Meraki_API
 {
@@ -12,30 +14,33 @@ namespace StageApp.Meraki_API
             _apiKey = apiKey;
         }
 
-        public async Task<string> CreateOrganizationAsync(string name) //voorbeeldfunctie van chatgpt  geen idee of het kan werken.
+        public async Task<Organisation> CreateOrganizationAsync(string name, string apiKey)
         {
-            using (HttpClient client = new HttpClient())
-            {
-                client.DefaultRequestHeaders.Add("X-Cisco-Meraki-API-Key", _apiKey);
+            Organisation organisation = null;
+            return organisation;
+            // Call Meraki API to create organization
+        }
 
-                var organizationData = new
-                {
-                    name
-                };
+        public async Task ClaimDevicesAsync(string organizationId, List<string> serialNumbers)
+        {
+            // Call Meraki API to claim devices
+        }
 
-                string jsonContent = System.Text.Json.JsonSerializer.Serialize(organizationData);
-                StringContent content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+        public async Task AssignDeviceToLocationAsync(string serialNumber, string location)
+        {
+            // Call Meraki API to assign device to location
+        }
 
-                HttpResponseMessage response = await client.PostAsync($"{BaseUrl}/organizations", content);
-                if (response.IsSuccessStatusCode)
-                {
-                    return await response.Content.ReadAsStringAsync();
-                }
-                else
-                {
-                    throw new Exception($"Error creating organization: {response.StatusCode} - {response.ReasonPhrase}");
-                }
-            }
+        public async Task RenameDeviceAsync(string serialNumber, string newName)
+        {
+            // Call Meraki API to rename device
+        }
+
+        public async Task<List<Models.Device>> GetDevicesAsync(string organizationId)
+        {
+            List<Models.Device> devices = [];
+            return devices;
+            // Call Meraki API to get devices
         }
     }
 }

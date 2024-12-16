@@ -15,7 +15,9 @@ namespace StageApp.Controllers
 
         public IActionResult Index()
         {
+            ExcelReader.GetExcel("1");
             return View();
+
         }
 
 

@@ -1,7 +1,11 @@
+using Microsoft.EntityFrameworkCore;
+using StageApp;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddDbContext<MerakiDbDbContext>();
 
 var app = builder.Build();
 

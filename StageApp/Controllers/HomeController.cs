@@ -15,13 +15,11 @@ namespace StageApp.Controllers
 
         public IActionResult Index()
         {
+            ExcelReader.GetExcel("1");
             return View();
+
         }
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()

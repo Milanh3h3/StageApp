@@ -25,22 +25,17 @@ namespace StageApp.Controllers
         {
             return View(await _context.Devices.ToListAsync());
         }
-        public Task<IActionResult> ClaimDevices()
+        public IActionResult Claim()
         {
-            return Task.FromResult<IActionResult>(View());
+            return View();
         }
-        public Task<IActionResult> AssignToLocation()
+        public IActionResult SetLocation()
         {
-            return Task.FromResult<IActionResult>(View());
+            return View();
         }
-        public Task<IActionResult> RenameDevices()
+        public IActionResult Rename()
         {
-            return Task.FromResult<IActionResult>(View());
+            return View();
         }
-        public Task<IActionResult> BackupNames()
-        {
-            return Task.FromResult<IActionResult>(View());
-        }
-
     }
 }

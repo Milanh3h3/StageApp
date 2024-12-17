@@ -24,28 +24,7 @@ namespace StageApp.Controllers
         {
             return View(await _context.Locations.ToListAsync());
         }
-        public async Task<IActionResult> AssignDevices()
-        {
-            return View();
-        }
-        
-        // GET: Locations/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
 
-            var location = await _context.Locations
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (location == null)
-            {
-                return NotFound();
-            }
-
-            return View(location);
-        }
 
         // GET: Locations/Create
         public IActionResult Create()

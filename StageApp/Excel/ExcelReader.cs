@@ -8,7 +8,6 @@ public class ExcelReader
 {
     public static List<string[]> GetExcel(string filePath)
     {
-        filePath = "C:\\Users\\mwmba\\Downloads\\Test.xlsx";
         List<string[]> excelRows = new List<string[]>();
         System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance); 
         using (var stream = File.Open(filePath, FileMode.Open, FileAccess.Read))

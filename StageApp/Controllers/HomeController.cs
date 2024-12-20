@@ -18,18 +18,30 @@ namespace StageApp.Controllers
         {
             return View();
         }
-
+        // Action to store the API key in a secure cookie
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SetAPIkey([Bind("API_key")] string API_key)
+        public IActionResult SetAPIkey(string API_key)
         {
-            if (ModelState.IsValid)
+            if (string.IsNullOrEmpty(API_key))
             {
-                HttpContext.Session.SetString("API_Key", API_key); //moet nog feedback of het gelukt is   
+                ModelState.AddModelError("", "API key cannot be empty.");
+                return View();
             }
+
+            // Set the API key in a secure cookie
+            CookieOptions options = new CookieOptions
+            {
+                HttpOnly = true, // Prevent client-side scripts from accessing the cookie
+                Expires = DateTimeOffset.UtcNow.AddMinutes(30), // Set an expiration time
+                SameSite = SameSiteMode.Strict,
+                Secure = true,
+            };
+
+            Response.Cookies.Append("API_Key", API_key, options);
+
             return RedirectToAction(nameof(Index));
         }
-
 
 
 

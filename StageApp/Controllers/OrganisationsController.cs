@@ -6,17 +6,29 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using StageApp;
-using StageApp.Models;
+using StageApp.ViewModels;
+using StageApp.Meraki_API;
 
 namespace StageApp.Controllers
 {
     public class OrganisationsController : Controller
     {
         private readonly MerakiDbDbContext _context;
+        private MerakiApiHelper _merakiApi;
 
         public OrganisationsController(MerakiDbDbContext context)
         {
             _context = context;
+        }
+
+        private bool InitializeMerakiApi()
+        {
+            if (Request.Cookies.TryGetValue("API_Key", out string? apiKey) && !string.IsNullOrEmpty(apiKey))
+            {
+                _merakiApi = new MerakiApiHelper(apiKey);
+                return true;
+            }
+            return false;
         }
 
         // GET: Organisations
@@ -25,26 +37,40 @@ namespace StageApp.Controllers
             return View(await _context.Organisations.ToListAsync());
         }
 
-        // GET: Organisations/Create
+        [HttpGet]
         public IActionResult Create()
         {
+            if (!InitializeMerakiApi())
+            {
+                return RedirectToAction("Index", "Home");
+            }
             return View();
         }
 
-        // POST: Organisations/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,ApiKey")] Organisation organisation)
+        [ValidateAntiForgeryToken] 
+        public async Task<IActionResult> Create(CreateOrganizationViewModel model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                _context.Add(organisation);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return View(model);
             }
-            return View(organisation);
+            if (!InitializeMerakiApi())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            try
+            {
+                var organization = await _merakiApi.CreateOrganizationAsync(model.Name);
+                ViewBag.Message = $"Organization '{organization.Name}' created successfully!";
+                return View();
+            }
+            catch (Exception ex) // als je deze foutmelding krijgt ben je waarschijnlijk niet geautoriseerd om een organisatie aan te maken
+            {
+                ModelState.AddModelError(string.Empty, $"Error: {ex.Message}");
+                return View(model);
+            }
         }
 
         // GET: Organisations/Delete/5

@@ -20,3 +20,18 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+.form-container {
+    margin-top: 50px;
+}
+
+.form-section {
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+.toggle-visibility {
+    cursor: pointer;
+}

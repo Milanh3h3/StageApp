@@ -1,8 +1,38 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "API key";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container form-container">
+    <div class="row">
+        <div class="col-md-6 form-section">
+            <h3 class="text-center">Set API key</h3>
+            <p class="text-center">API key is necessary for every function. Please enter your API key before submitting any functions.</p>
+            <form method="post" action="/Home/SetAPIkey">
+                @Html.AntiForgeryToken()
+                <div class="mb-3">
+                    <label class="form-label">API key</label>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="API_Key_Field" name="API_key" required>
+                        <button type="button" class="btn btn-outline-secondary toggle-visibility" onclick="toggleVisibility('API_Key_Field')">Show</button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Submit</button>
+            </form>
+        </div>
+        <div class="col-md-6 form-section">
+            <h3 class="text-center">Note:</h3>
+            <p class="text-center">For security reasons the API key needs to be set again every 30 minutes</p>
+        </div>
+    </div>
 </div>
+
+<script>
+    function toggleVisibility(fieldId) {
+        const field = document.getElementById(fieldId);
+        if (field.type === "password") {
+            field.type = "text";
+        } else {
+            field.type = "password";
+        }
+    }
+</script>

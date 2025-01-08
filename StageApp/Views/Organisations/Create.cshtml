@@ -6,10 +6,24 @@
 
 <h1>Create</h1>
 
-<h4>Organisation</h4>
+<h4>Organization</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
+        @if (!string.IsNullOrEmpty(ViewBag.Message))
+        {
+            <div class="alert alert-success">
+                @ViewBag.Message
+            </div>
+        }
+
+        @if (ViewData.ModelState.Count > 0 && !ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-danger">
+                <strong>Error:</strong> Invalid API key or User not authorised.
+            </div>
+        }
+
         <form asp-action="Create" asp-controller="Organisations" method="post">
             <div class="form-group">
                 <label for="Name">Organization Name</label>
@@ -20,12 +34,10 @@
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }
 
 

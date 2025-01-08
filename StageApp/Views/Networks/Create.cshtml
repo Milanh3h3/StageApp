@@ -1,0 +1,74 @@
+﻿@model StageApp.ViewModels.CreateNetworkViewModel
+
+@{
+    ViewData["Title"] = "Create Network";
+}
+
+<h1>Create Network</h1>
+
+<div class="container form-container">
+    <div class="row">
+        <div class="col-md-6 form-section">
+            @if (!string.IsNullOrEmpty(ViewBag.Message))
+            {
+                <div class="alert alert-success">
+                    @ViewBag.Message
+                </div>
+            }
+
+            @if (ViewData.ModelState.Count > 0 && !ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    <strong>Error:</strong> Invalid input or network creation failed.
+                </div>
+            }
+
+            <form asp-action="Create" asp-controller="Networks" method="post">
+                <div class="form-group">
+                    <label for="OrganizationId">Organization ID</label>
+                    <input type="text" class="form-control" id="OrganizationId" name="OrganizationId" required />
+                </div>
+                <div class="form-group">
+                    <label for="Name">Network Name</label>
+                    <input type="text" class="form-control" id="Name" name="Name" required />
+                </div>
+                <div class="form-group">
+                    <label for="Type">Network Type/Product Type</label>
+                    <select class="form-control" id="Type" name="SelectedNetworkTypes" multiple="multiple" required>
+                        @foreach (var item in Model.NetworkTypes)
+                        {
+                            @if (Model.SelectedNetworkTypes.Contains(item.Value))
+                            {
+                                <option value="@item.Value" selected>@item.Text</option>
+                            }
+                            else
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="Timezone">Timezone</label>
+                    <select class="form-control" id="Timezone" name="Timezone" required>
+                        @foreach (var item in Model.Timezones)
+                        {
+                            <option value="@item.Value">@item.Text</option>
+                        }
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Create Network</button>
+            </form>
+        </div>
+        <div class="col-md-6 form-section">
+            <h3 class="text-center">Note:</h3>
+            <p class="text-center">To select multiple Network Types hold Ctrl</p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

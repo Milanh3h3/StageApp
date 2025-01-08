@@ -2,7 +2,7 @@
 
 namespace StageApp.Models
 {
-    public class Location
+    public class Network
     {
         [Key]
         public int Id { get; set; }

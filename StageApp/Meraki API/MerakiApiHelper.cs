@@ -1,11 +1,8 @@
-﻿using StageApp.Models;
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
+﻿using Newtonsoft.Json;
+using StageApp.Models;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace StageApp.Meraki_API
 {
@@ -32,9 +29,42 @@ namespace StageApp.Meraki_API
             response.EnsureSuccessStatusCode();
 
             var json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<Organisation>(json);
+            return System.Text.Json.JsonSerializer.Deserialize<Organisation>(json);
         }
+        public async Task<string> CreateNetworkAsync(string organizationId, string name, Array productTypes, string timezone = "America/Los_Angeles")
+        {
+            var url = $"{BaseUrl}/organizations/{organizationId}/networks";
 
+            var payload = new
+            {
+                name = name,
+                productTypes = productTypes,
+                timezone = timezone
+            };
+
+            var jsonPayload = System.Text.Json.JsonSerializer.Serialize(payload);
+            var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+            try
+            {
+                var response = await _httpClient.PostAsync(url, content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseBody = await response.Content.ReadAsStringAsync();
+                    return responseBody; // Returns the response JSON with network details
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    throw new Exception($"Error: {response.StatusCode}, Details: {error}");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"An error occurred while creating the network: {ex.Message}");
+            }
+        }
         public async Task ClaimDevicesAsync(string organizationId, List<string> serialNumbers)
         {
             var url = $"{BaseUrl}/organizations/{organizationId}/inventory/devices/claim";
@@ -42,27 +72,6 @@ namespace StageApp.Meraki_API
 
             var response = await _httpClient.PostAsync(url, GetJsonContent(payload));
             response.EnsureSuccessStatusCode();
-        }
-
-        public async Task<Location> CreateLocationAsync(string serialNumber, string? address, string? city = null, string? zip = null, string? country = null, double? latitude = null, double? longitude = null)
-        {
-            var url = $"{BaseUrl}/devices/{serialNumber}";
-
-            var payload = new
-            {
-                address,
-                city,
-                zip,
-                country,
-                latitude,
-                longitude
-            };
-
-            var response = await _httpClient.PutAsync(url, GetJsonContent(payload));
-            response.EnsureSuccessStatusCode();
-
-            var json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<Location>(json);
         }
 
         public async Task RenameDeviceAsync(string serialNumber, string newName)
@@ -82,12 +91,12 @@ namespace StageApp.Meraki_API
             response.EnsureSuccessStatusCode();
 
             var json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<List<Models.Device>>(json);
+            return System.Text.Json.JsonSerializer.Deserialize<List<Models.Device>>(json);
         }
 
         private StringContent GetJsonContent(object payload)
         {
-            var json = JsonSerializer.Serialize(payload);
+            var json = System.Text.Json.JsonSerializer.Serialize(payload);
             return new StringContent(json, Encoding.UTF8, "application/json");
         }
     }

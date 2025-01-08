@@ -6,21 +6,22 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using StageApp;
-using StageApp.ViewModels;
 using StageApp.Meraki_API;
+using StageApp.Models;
+using StageApp.ViewModels;
 
 namespace StageApp.Controllers
 {
-    public class OrganisationsController : Controller
+    public class NetworksController : Controller
     {
         private readonly MerakiDbDbContext _context;
         private MerakiApiHelper? _merakiApi;
 
-        public OrganisationsController(MerakiDbDbContext context)
+        public NetworksController(MerakiDbDbContext context)
         {
             _context = context;
-        }
 
+        }
         private bool InitializeMerakiApi()
         {
             if (Request.Cookies.TryGetValue("API_Key", out string? apiKey) && !string.IsNullOrEmpty(apiKey))
@@ -30,13 +31,14 @@ namespace StageApp.Controllers
             }
             return false;
         }
-
-        // GET: Organisations
+        // GET: networks
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Organisations.ToListAsync());
+            return View(await _context.Networks.ToListAsync());
         }
 
+
+        // GET: Networks/Create
         [HttpGet]
         public IActionResult Create()
         {
@@ -44,12 +46,14 @@ namespace StageApp.Controllers
             {
                 return RedirectToAction("Index", "Home");
             }
-            return View();
+
+            var model = new CreateNetworkViewModel();
+            return View(model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CreateOrganizationViewModel model)
+        public async Task<IActionResult> Create(CreateNetworkViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -63,9 +67,10 @@ namespace StageApp.Controllers
 
             try
             {
-                var organization = await _merakiApi.CreateOrganizationAsync(model.Name);
-                ViewBag.Message = $"Organization '{organization.Name}' created successfully!";
-                return View();
+                string[] productTypes = model.SelectedNetworkTypes.ToArray();
+                var response = await _merakiApi.CreateNetworkAsync(model.OrganizationId, model.Name, productTypes, model.Timezone);
+                ViewBag.Message = $"Network '{model.Name}' created successfully!";
+                return View(model);
             }
             catch (Exception ex)
             {
@@ -74,8 +79,7 @@ namespace StageApp.Controllers
             }
         }
 
-
-        // GET: Organisations/Delete/5
+        // GET: Locations/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -83,34 +87,34 @@ namespace StageApp.Controllers
                 return NotFound();
             }
 
-            var organisation = await _context.Organisations
+            var network = await _context.Networks
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (organisation == null)
+            if (network == null)
             {
                 return NotFound();
             }
 
-            return View(organisation);
+            return View(network);
         }
 
-        // POST: Organisations/Delete/5
+        // POST: networks/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var organisation = await _context.Organisations.FindAsync(id);
-            if (organisation != null)
+            var network = await _context.Networks.FindAsync(id);
+            if (network != null)
             {
-                _context.Organisations.Remove(organisation);
+                _context.Networks.Remove(network);
             }
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool OrganisationExists(int id)
+        private bool networkExists(int id)
         {
-            return _context.Organisations.Any(e => e.Id == id);
+            return _context.Networks.Any(e => e.Id == id);
         }
     }
 }

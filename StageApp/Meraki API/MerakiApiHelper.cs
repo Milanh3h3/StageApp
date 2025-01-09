@@ -65,9 +65,9 @@ namespace StageApp.Meraki_API
                 throw new Exception($"An error occurred while creating the network: {ex.Message}");
             }
         }
-        public async Task ClaimDevicesAsync(string organizationId, List<string> serialNumbers)
+        public async Task ClaimDevicesAsync(string networkId, List<string> serialNumbers)
         {
-            var url = $"{BaseUrl}/organizations/{organizationId}/inventory/devices/claim";
+            var url = $"{BaseUrl}/networks/{networkId}/devices/claim";
             var payload = new { serials = serialNumbers };
 
             var response = await _httpClient.PostAsync(url, GetJsonContent(payload));

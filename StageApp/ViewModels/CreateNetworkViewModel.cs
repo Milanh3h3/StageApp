@@ -6,7 +6,7 @@ namespace StageApp.ViewModels
     {
         public string OrganizationId { get; set; }
         public string Name { get; set; }
-        public List<string> SelectedNetworkTypes { get; set; } = new List<string>();  // Change this to a list
+        public List<string> SelectedNetworkTypes { get; set; } = new List<string>();
         public string Timezone { get; set; }
 
         public IEnumerable<SelectListItem> NetworkTypes = new List<SelectListItem>

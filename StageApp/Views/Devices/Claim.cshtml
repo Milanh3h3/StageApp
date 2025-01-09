@@ -1,7 +1,48 @@
-﻿
+﻿@model StageApp.ViewModels.ClaimDevicesViewModel
+
 @{
-    ViewData["Title"] = "ClaimDevices";
+    ViewData["Title"] = "Claim Devices";
 }
 
-<h1>ClaimDevices</h1>
+<div class="container form-container">
+    <div class="row">
+        <div class="col-md-6 form-section">
+            @if (!string.IsNullOrEmpty(ViewBag.Message))
+            {
+                <div class="alert alert-success">
+                    @ViewBag.Message
+                </div>
+            }
 
+            @if (ViewData.ModelState.Count > 0 && !ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    <strong>Error:</strong> Please correct the errors below.
+                </div>
+            }
+
+            <form asp-action="Claim" asp-controller="Devices" method="post">
+                <div class="form-group">
+                    <label for="NetworkId">Network ID</label>
+                    <input type="text" class="form-control" id="NetworkId" name="NetworkId" required />
+                </div>
+                <div class="form-group">
+                    <label for="SerialNumbers">Serial Numbers</label>
+                    <textarea class="form-control" id="SerialNumbers" name="SerialNumbers" rows="4" placeholder="Enter each serial number on a new line" required></textarea>
+                    <small class="form-text text-muted">Enter each serial number on a new line.</small>
+                </div>
+                <button type="submit" class="btn btn-primary">Claim Devices</button>
+            </form>
+        </div>
+        <div class="col-md-6 form-section">
+            <h3 class="text-center">Note:</h3>
+            <p class="text-center">You can claim multiple devices by entering their serial numbers, one per line.</p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

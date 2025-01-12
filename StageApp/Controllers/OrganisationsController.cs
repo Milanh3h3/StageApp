@@ -63,8 +63,8 @@ namespace StageApp.Controllers
 
             try
             {
-                var organization = await _merakiApi.CreateOrganizationAsync(model.Name);
-                ViewBag.Message = $"Organization '{organization.Name}' created successfully!";
+                await _merakiApi.CreateOrganizationAsync(model.Name);
+                ViewBag.Message = $"Organization '{model.Name}' created successfully!";
                 return View();
             }
             catch (Exception ex)

@@ -68,7 +68,7 @@ namespace StageApp.Controllers
             try
             {
                 string[] productTypes = model.SelectedNetworkTypes.ToArray();
-                var response = await _merakiApi.CreateNetworkAsync(model.OrganizationId, model.Name, productTypes, model.Timezone);
+                await _merakiApi.CreateNetworkAsync(model.OrganizationId, model.Name, productTypes, model.Timezone);
                 ViewBag.Message = $"Network '{model.Name}' created successfully!";
                 return View(model);
             }

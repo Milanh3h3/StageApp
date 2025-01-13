@@ -21,6 +21,7 @@
                 </div>
             }
 
+            <p class="text-center">Note: You can rename multiple devices by entering their serial numbers, one per line.</p>
             <form asp-action="Rename" asp-controller="Devices" method="post">
                 <div class="form-group">
                     <label for="SerialNumbers">Serial Numbers</label>
@@ -40,8 +41,17 @@
             </form>
         </div>
         <div class="col-md-6 form-section">
-            <h3 class="text-center">Note:</h3>
-            <p class="text-center">You can rename multiple devices by entering their serial numbers, one per line.</p>
+            <h3>Bulk</h3>
+            <p>Make sure the excel file looks like this: first column Serial Numbers, second column new name</p>
+            <p>Note: multiple devices can be renamed to the same name. For longer files make sure to refresh the API Key before Confirming.</p>
+            <form asp-action="RenameBulk" asp-controller="Devices" method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="ExcelFile">Upload Excel File</label>
+                    <input type="file" class="form-control" id="ExcelFile" name="ExcelFile" accept=".xls,.xlsx" required />
+                    <small class="form-text text-muted">Allowed file types: .xls, .xlsx</small>
+                </div>
+                <button type="submit" class="btn btn-primary">Confirm Bulk Rename</button>
+            </form>
         </div>
     </div>
 </div>

@@ -226,6 +226,59 @@ namespace StageApp.Controllers
                 }
             }
         }
+        [HttpPost]
+        public async Task<IActionResult> RenameBulk(IFormFile excelFile)
+        {
+            if (!InitializeMerakiApi())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            if (excelFile == null || excelFile.Length == 0)
+            {
+                ModelState.AddModelError("", "Please upload a valid Excel file.");
+                return View("Rename");
+            }
+
+            var tempFilePath = Path.GetTempFileName();
+            try
+            {
+                using (var stream = new FileStream(tempFilePath, FileMode.Create))
+                {
+                    await excelFile.CopyToAsync(stream);
+                }
+
+                var excelData = ExcelReader.GetExcel(tempFilePath);
+                if (excelData == null || excelData.Count == 0)
+                {
+                    ModelState.AddModelError("", "The uploaded file is empty or invalid.");
+                    return View("Rename");
+                }
+                foreach (var row in excelData)
+                {
+                    if (row.Length < 2) continue;
+                    string serial = row[0];
+                    string Name = row[1];
+                    if (string.IsNullOrEmpty(serial)) continue;
+                    await _merakiApi.RenameDeviceAsync(serial, Name);
+                    await Task.Delay(350); // ongeveer 3 calls per second
+                }
+                ViewBag.Message = "Devices successfully renamed from the uploaded file.";
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", $"An error occurred while processing the file: {ex.Message}");
+                return View("Rename");
+            }
+            finally
+            {
+                if (System.IO.File.Exists(tempFilePath))
+                {
+                    System.IO.File.Delete(tempFilePath);
+                }
+            }
+            return RedirectToAction("Rename");
+        }
         // GET: Devices/Rename
         [HttpGet]
         public IActionResult RenameBackups()
@@ -339,7 +392,7 @@ namespace StageApp.Controllers
                     await _merakiApi.SetDeviceAddressAsync(serial, Address, Notes);
                     await Task.Delay(350); // ongeveer 3 calls per second
                 }
-                ViewBag.Message = "Devices successfully claimed from the uploaded file.";
+                ViewBag.Message = "Devices location successfully set from the uploaded file.";
             }
             catch (Exception ex)
             {

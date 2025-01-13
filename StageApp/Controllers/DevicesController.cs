@@ -75,6 +75,76 @@ namespace StageApp.Controllers
             }
         }
 
+        [HttpPost]
+        public async Task<IActionResult> ClaimBulk(IFormFile excelFile)
+        {
+            if (!InitializeMerakiApi())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            if (excelFile == null || excelFile.Length == 0)
+            {
+                ModelState.AddModelError("", "Please upload a valid Excel file.");
+                return View("Claim");
+            }
+
+            var tempFilePath = Path.GetTempFileName();
+            try
+            {
+                using (var stream = new FileStream(tempFilePath, FileMode.Create))
+                {
+                    await excelFile.CopyToAsync(stream);
+                }
+
+                var excelData = ExcelReader.GetExcel(tempFilePath);
+                if (excelData == null || excelData.Count == 0)
+                {
+                    ModelState.AddModelError("", "The uploaded file is empty or invalid.");
+                    return View("Claim");
+                }
+
+                var devicesByNetwork = new Dictionary<string, List<string>>();
+                foreach (var row in excelData)
+                {
+                    if (row.Length < 2) continue; 
+                    string serialNumber = row[0]?.Trim();
+                    string networkId = row[1]?.Trim();
+                    if (string.IsNullOrEmpty(serialNumber) || string.IsNullOrEmpty(networkId))
+                    {
+                        continue;
+                    }
+                    if (!devicesByNetwork.ContainsKey(networkId))
+                    {
+                        devicesByNetwork[networkId] = new List<string>();
+                    }
+                    devicesByNetwork[networkId].Add(serialNumber);
+                }
+                foreach (var kvp in devicesByNetwork)
+                {
+                    string networkId = kvp.Key;
+                    List<string> serialNumbers = kvp.Value;
+                    await _merakiApi.ClaimDevicesAsync(networkId, serialNumbers);
+                    await Task.Delay(350); // ongeveer 3 calls per second
+                }
+                ViewBag.Message = "Devices successfully claimed from the uploaded file.";
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", $"An error occurred while processing the file: {ex.Message}");
+                return View("Claim");
+            }
+            finally
+            {
+                if (System.IO.File.Exists(tempFilePath))
+                {
+                    System.IO.File.Delete(tempFilePath);
+                }
+            }
+            return RedirectToAction("Claim");
+        }
+
+    
         // GET: Devices/Rename
         [HttpGet]
         public IActionResult Rename()
@@ -145,7 +215,7 @@ namespace StageApp.Controllers
                     }
                     string backupDirectory = Path.Combine("RenameBackups");
                     string fileName = $"Backup_{DateTime.Now:yyyy-MM-dd_HH-mm}.csv";
-                    ExcelWriter.SetExcel(Path.Combine(backupDirectory, fileName), NamesAndSerials); // moet nog iets doen voor de filepath
+                    ExcelWriter.SetExcel(Path.Combine(backupDirectory, fileName), NamesAndSerials);
                     ViewBag.Message = "Devices renamed successfully";
                     return View(model);
                 }
@@ -155,6 +225,112 @@ namespace StageApp.Controllers
                     return View(model);
                 }
             }
+        }
+        [HttpPost]
+        public async Task<IActionResult> RenameBulk(IFormFile excelFile, bool MakeBackup)
+        {
+            if (!InitializeMerakiApi())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            if (excelFile == null || excelFile.Length == 0)
+            {
+                ModelState.AddModelError("", "Please upload a valid Excel file.");
+                return View("Rename");
+            }
+            if (!MakeBackup)
+            {
+                var tempFilePath = Path.GetTempFileName();
+                try
+                {
+                    using (var stream = new FileStream(tempFilePath, FileMode.Create))
+                    {
+                        await excelFile.CopyToAsync(stream);
+                    }
+
+                    var excelData = ExcelReader.GetExcel(tempFilePath);
+                    if (excelData == null || excelData.Count == 0)
+                    {
+                        ModelState.AddModelError("", "The uploaded file is empty or invalid.");
+                        return View("Rename");
+                    }
+                    foreach (var row in excelData)
+                    {
+                        if (row.Length < 2) continue;
+                        string serial = row[0];
+                        string Name = row[1];
+                        if (string.IsNullOrEmpty(serial)) continue;
+                        await _merakiApi.RenameDeviceAsync(serial, Name);
+                        await Task.Delay(350); // ongeveer 3 calls per second
+                    }
+                    ViewBag.Message = "Devices successfully renamed from the uploaded file.";
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", $"An error occurred while processing the file: {ex.Message}");
+                    return View("Rename");
+                }
+                finally
+                {
+                    if (System.IO.File.Exists(tempFilePath))
+                    {
+                        System.IO.File.Delete(tempFilePath);
+                    }
+                }
+            }
+            else
+            {
+                var tempFilePath = Path.GetTempFileName();
+                try
+                {
+                    using (var stream = new FileStream(tempFilePath, FileMode.Create))
+                    {
+                        await excelFile.CopyToAsync(stream);
+                    }
+
+                    var excelData = ExcelReader.GetExcel(tempFilePath);
+                    if (excelData == null || excelData.Count == 0)
+                    {
+                        ModelState.AddModelError("", "The uploaded file is empty or invalid.");
+                        return View("Rename");
+                    }
+                    List<string[]> NamesAndSerials = [];
+                    string[] Header = ["Serial Numbers", "Old Names", "New Names"];
+                    NamesAndSerials.Append(Header);
+                    foreach (var row in excelData)
+                    {
+                        if (row.Length < 2) continue;
+                        string serial = row[0];
+                        string Name = row[1];
+                        if (string.IsNullOrEmpty(serial)) continue;
+                        string OldName = await _merakiApi.GetDeviceNameAsync(serial);
+                        await Task.Delay(350); // ongeveer 3 calls per second
+                        await _merakiApi.RenameDeviceAsync(serial, Name);
+                        await Task.Delay(350); // ongeveer 3 calls per second
+                        string[] DataRow = [serial, OldName, Name];
+                        NamesAndSerials.Append(DataRow);
+                    }
+                    string backupDirectory = Path.Combine("RenameBackups");
+                    string fileName = $"Backup_{DateTime.Now:yyyy-MM-dd_HH-mm}.csv";
+                    ExcelWriter.SetExcel(Path.Combine(backupDirectory, fileName), NamesAndSerials);
+                    ViewBag.Message = "Devices successfully renamed from the uploaded file.";
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", $"An error occurred while processing the file: {ex.Message}");
+                    return View("Rename");
+                }
+                finally
+                {
+                    if (System.IO.File.Exists(tempFilePath))
+                    {
+                        System.IO.File.Delete(tempFilePath);
+                    }
+                }
+
+            }
+            return RedirectToAction("Rename");
         }
         // GET: Devices/Rename
         [HttpGet]
@@ -230,6 +406,60 @@ namespace StageApp.Controllers
                 return View(model);
             }
 
+        }
+        [HttpPost]
+        public async Task<IActionResult> SetLocationBulk(IFormFile excelFile)
+        {
+            if (!InitializeMerakiApi())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            if (excelFile == null || excelFile.Length == 0)
+            {
+                ModelState.AddModelError("", "Please upload a valid Excel file.");
+                return View("SetLocation");
+            }
+
+            var tempFilePath = Path.GetTempFileName();
+            try
+            {
+                using (var stream = new FileStream(tempFilePath, FileMode.Create))
+                {
+                    await excelFile.CopyToAsync(stream);
+                }
+
+                var excelData = ExcelReader.GetExcel(tempFilePath);
+                if (excelData == null || excelData.Count == 0)
+                {
+                    ModelState.AddModelError("", "The uploaded file is empty or invalid.");
+                    return View("SetLocation");
+                }
+                foreach (var row in excelData)
+                {
+                    if (row.Length < 2) continue;
+                    string serial = row[0];
+                    string Address = row[1];
+                    string Notes = row[2];
+                    if (string.IsNullOrEmpty(serial)) continue;
+                    await _merakiApi.SetDeviceAddressAsync(serial, Address, Notes);
+                    await Task.Delay(350); // ongeveer 3 calls per second
+                }
+                ViewBag.Message = "Devices location successfully set from the uploaded file.";
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", $"An error occurred while processing the file: {ex.Message}");
+                return View("SetLocation");
+            }
+            finally
+            {
+                if (System.IO.File.Exists(tempFilePath))
+                {
+                    System.IO.File.Delete(tempFilePath);
+                }
+            }
+            return RedirectToAction("SetLocation");
         }
     }
 }

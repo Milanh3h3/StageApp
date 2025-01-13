@@ -301,5 +301,59 @@ namespace StageApp.Controllers
             }
 
         }
+        [HttpPost]
+        public async Task<IActionResult> SetLocationBulk(IFormFile excelFile)
+        {
+            if (!InitializeMerakiApi())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            if (excelFile == null || excelFile.Length == 0)
+            {
+                ModelState.AddModelError("", "Please upload a valid Excel file.");
+                return View("SetLocation");
+            }
+
+            var tempFilePath = Path.GetTempFileName();
+            try
+            {
+                using (var stream = new FileStream(tempFilePath, FileMode.Create))
+                {
+                    await excelFile.CopyToAsync(stream);
+                }
+
+                var excelData = ExcelReader.GetExcel(tempFilePath);
+                if (excelData == null || excelData.Count == 0)
+                {
+                    ModelState.AddModelError("", "The uploaded file is empty or invalid.");
+                    return View("SetLocation");
+                }
+                foreach (var row in excelData)
+                {
+                    if (row.Length < 2) continue;
+                    string serial = row[0];
+                    string Address = row[1];
+                    string Notes = row[2];
+                    if (string.IsNullOrEmpty(serial)) continue;
+                    await _merakiApi.SetDeviceAddressAsync(serial, Address, Notes);
+                    await Task.Delay(350); // ongeveer 3 calls per second
+                }
+                ViewBag.Message = "Devices successfully claimed from the uploaded file.";
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", $"An error occurred while processing the file: {ex.Message}");
+                return View("SetLocation");
+            }
+            finally
+            {
+                if (System.IO.File.Exists(tempFilePath))
+                {
+                    System.IO.File.Delete(tempFilePath);
+                }
+            }
+            return RedirectToAction("SetLocation");
+        }
     }
 }

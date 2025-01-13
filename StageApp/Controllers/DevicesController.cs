@@ -75,6 +75,76 @@ namespace StageApp.Controllers
             }
         }
 
+        [HttpPost]
+        public async Task<IActionResult> ClaimBulk(IFormFile excelFile)
+        {
+            if (!InitializeMerakiApi())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            if (excelFile == null || excelFile.Length == 0)
+            {
+                ModelState.AddModelError("", "Please upload a valid Excel file.");
+                return View("Claim");
+            }
+
+            var tempFilePath = Path.GetTempFileName();
+            try
+            {
+                using (var stream = new FileStream(tempFilePath, FileMode.Create))
+                {
+                    await excelFile.CopyToAsync(stream);
+                }
+
+                var excelData = ExcelReader.GetExcel(tempFilePath);
+                if (excelData == null || excelData.Count == 0)
+                {
+                    ModelState.AddModelError("", "The uploaded file is empty or invalid.");
+                    return View("Claim");
+                }
+
+                var devicesByNetwork = new Dictionary<string, List<string>>();
+                foreach (var row in excelData)
+                {
+                    if (row.Length < 2) continue; 
+                    string serialNumber = row[0]?.Trim();
+                    string networkId = row[1]?.Trim();
+                    if (string.IsNullOrEmpty(serialNumber) || string.IsNullOrEmpty(networkId))
+                    {
+                        continue;
+                    }
+                    if (!devicesByNetwork.ContainsKey(networkId))
+                    {
+                        devicesByNetwork[networkId] = new List<string>();
+                    }
+                    devicesByNetwork[networkId].Add(serialNumber);
+                }
+                foreach (var kvp in devicesByNetwork)
+                {
+                    string networkId = kvp.Key;
+                    List<string> serialNumbers = kvp.Value;
+                    await _merakiApi.ClaimDevicesAsync(networkId, serialNumbers);
+                    await Task.Delay(350); // ongeveer 3 calls per second
+                }
+                ViewBag.Message = "Devices successfully claimed from the uploaded file.";
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", $"An error occurred while processing the file: {ex.Message}");
+                return View("Claim");
+            }
+            finally
+            {
+                if (System.IO.File.Exists(tempFilePath))
+                {
+                    System.IO.File.Delete(tempFilePath);
+                }
+            }
+            return RedirectToAction("Claim");
+        }
+
+    
         // GET: Devices/Rename
         [HttpGet]
         public IActionResult Rename()

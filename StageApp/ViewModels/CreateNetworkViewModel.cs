@@ -4,10 +4,10 @@ namespace StageApp.ViewModels
 {
     public class CreateNetworkViewModel
     {
-        public string OrganizationId { get; set; }
-        public string Name { get; set; }
+        public string? OrganizationId { get; set; }
+        public string? Name { get; set; }
         public List<string> SelectedNetworkTypes { get; set; } = new List<string>();
-        public string Timezone { get; set; }
+        public string? Timezone { get; set; }
 
         public IEnumerable<SelectListItem> NetworkTypes = new List<SelectListItem>
         {

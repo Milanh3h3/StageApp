@@ -14,13 +14,10 @@ namespace StageApp.Controllers
 {
     public class NetworksController : Controller
     {
-        private readonly MerakiDbDbContext _context;
         private MerakiApiHelper? _merakiApi;
 
-        public NetworksController(MerakiDbDbContext context)
+        public NetworksController()
         {
-            _context = context;
-
         }
         private bool InitializeMerakiApi()
         {
@@ -31,12 +28,6 @@ namespace StageApp.Controllers
             }
             return false;
         }
-        // GET: networks
-        public async Task<IActionResult> Index()
-        {
-            return View(await _context.Networks.ToListAsync());
-        }
-
 
         // GET: Networks/Create
         [HttpGet]
@@ -77,44 +68,6 @@ namespace StageApp.Controllers
                 ModelState.AddModelError(string.Empty, $"Error: {ex.Message}");
                 return View(model);
             }
-        }
-
-        // GET: Locations/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var network = await _context.Networks
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (network == null)
-            {
-                return NotFound();
-            }
-
-            return View(network);
-        }
-
-        // POST: networks/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var network = await _context.Networks.FindAsync(id);
-            if (network != null)
-            {
-                _context.Networks.Remove(network);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool networkExists(int id)
-        {
-            return _context.Networks.Any(e => e.Id == id);
         }
     }
 }

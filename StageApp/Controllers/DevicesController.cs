@@ -20,12 +20,10 @@ namespace StageApp.Controllers
 {
     public class DevicesController : Controller
     {
-        private readonly MerakiDbDbContext _context;
         private MerakiApiHelper? _merakiApi;
 
-        public DevicesController(MerakiDbDbContext context)
+        public DevicesController()
         {
-            _context = context;
         }
         private bool InitializeMerakiApi()
         {
@@ -37,10 +35,6 @@ namespace StageApp.Controllers
             return false;
         }
 
-        public async Task<IActionResult> Index()
-        {
-            return View(await _context.Devices.ToListAsync());
-        }
         // GET: Devices/Create
         [HttpGet]
         public IActionResult Claim()

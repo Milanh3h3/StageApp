@@ -1,5 +1,46 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model StageApp.ViewModels.SetLocationViewModel
+
 @{
+    ViewData["Title"] = "Rename Devices";
 }
+
+<div class="container form-container">
+    <div class="row">
+        <div class="col-md-6 form-section">
+            @if (!string.IsNullOrEmpty(ViewBag.Message))
+            {
+                <div class="alert alert-success">
+                    @ViewBag.Message
+                </div>
+            }
+
+            @if (ViewData.ModelState.Count > 0 && !ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    <strong>Error:</strong> Please correct the errors below.
+                </div>
+            }
+
+            <form asp-action="SetLocation" asp-controller="Devices" method="post">
+                <div class="form-group">
+                    <label for="SerialNumbers">Serial Numbers</label>
+                    <textarea class="form-control" id="SerialNumbers" name="SerialNumbers" rows="4" placeholder="Enter each serial number on a new line" required>@(Model.SerialNumbers != null && Model.SerialNumbers.Any() ? string.Join("\n", Model.SerialNumbers) : "")</textarea>
+                    <small class="form-text text-muted">Enter each serial number on a new line.</small>
+                </div>
+                <div class="form-group">
+                    <label for="Address">Address</label>
+                    <textarea class="form-control" id="Address" name="Address" rows="4" placeholder="Enter one address" required>@(Model.Address)</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="Notes">Notes</label>
+                    <textarea class="form-control" id="Notes" name="Notes" rows="4" placeholder="Enter Notes" required>@(Model.Notes)</textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Set Location</button>
+            </form>
+        </div>
+        <div class="col-md-6 form-section">
+            <h3 class="text-center">Note:</h3>
+            <p class="text-center">You can set the location of multiple devices by entering their serial numbers, one per line.</p>
+        </div>
+    </div>
+</div>

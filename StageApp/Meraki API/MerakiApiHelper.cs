@@ -66,6 +66,14 @@ namespace StageApp.Meraki_API
             var deviceDetails = System.Text.Json.JsonSerializer.Deserialize<Device>(jsonResponse); // ik hoop dat de Device class niet precies hetzelfde hoeft te zijn als de jsonresponse... anders staat het response voorbeeld in de device class
             return deviceDetails?.Name ?? "Name not available";
         }
+        public async Task SetDeviceAddressAsync(string serialNumber, string address, string notes)
+        {
+            var url = $"{BaseUrl}/devices/{serialNumber}";
+            var payload = new { address, notes };
+
+            var response = await _httpClient.PutAsync(url, GetJsonContent(payload));
+            response.EnsureSuccessStatusCode();
+        }
         private StringContent GetJsonContent(object payload)
         {
             var json = System.Text.Json.JsonSerializer.Serialize(payload);

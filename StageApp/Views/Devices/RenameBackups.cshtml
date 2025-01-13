@@ -1,0 +1,28 @@
+﻿@model IEnumerable<StageApp.ViewModels.RenameBackupsViewModel>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>File Name</th>
+            <th>Last Modified</th>
+            <th>Size (Bytes)</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var file in Model)
+        {
+            <tr>
+                <td>@file.FileName</td>
+                <td>@file.LastModified</td>
+                <td>@file.FileSize</td>
+                <td>
+                    <a asp-action="Download" asp-route-filePath="@file.FilePath" class="btn btn-primary">
+                        Download
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+

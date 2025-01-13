@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Elfie.Serialization;
 using Humanizer;
 using Meraki.Api.Data;
 using Meraki.Api.Interfaces.General.Devices;
@@ -148,7 +149,9 @@ namespace StageApp.Controllers
                         string[] DataRow = [serial, OldName, name];
                         NamesAndSerials.Append(DataRow);
                     }
-                    ExcelWriter.SetExcel("",NamesAndSerials); // moet nog iets doen voor de filepath
+                    string backupDirectory = Path.Combine("RenameBackups");
+                    string fileName = $"Backup_{DateTime.Now:yyyy-MM-dd_HH-mm}.csv";
+                    ExcelWriter.SetExcel(Path.Combine(backupDirectory, fileName), NamesAndSerials); // moet nog iets doen voor de filepath
                     ViewBag.Message = "Devices renamed successfully";
                     return View(model);
                 }
@@ -158,6 +161,81 @@ namespace StageApp.Controllers
                     return View(model);
                 }
             }
+        }
+        // GET: Devices/Rename
+        [HttpGet]
+        public IActionResult RenameBackups()
+        {
+            string backupsFolder = Path.Combine("RenameBackups");
+            var files = Directory.GetFiles(backupsFolder);
+            var model = files.Select(file =>
+            {
+                var fileInfo = new FileInfo(file);
+                return new RenameBackupsViewModel
+                {
+                    FileName = fileInfo.Name,
+                    FilePath = fileInfo.FullName,
+                    LastModified = fileInfo.LastWriteTime,
+                    FileSize = fileInfo.Length
+                };
+            }).ToList();
+
+            return View(model);
+        }
+        [HttpGet]
+        public IActionResult Download(string filePath)
+        {
+            if (System.IO.File.Exists(filePath))
+            {
+                var fileBytes = System.IO.File.ReadAllBytes(filePath);
+                var fileName = Path.GetFileName(filePath); // Extract only the file name
+                return File(fileBytes, "application/octet-stream", fileName);
+            }
+            return NotFound("The requested file does not exist.");
+        }
+        // GET: Devices/Rename
+        [HttpGet]
+        public IActionResult SetLocation()
+        {
+            if (!InitializeMerakiApi())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            var model = new SetLocationViewModel();
+            return View(model);
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetLocation(SetLocationViewModel model)
+        {
+            model.SerialNumbers = model.SerialNumbers.SelectMany(s => s.Split(new[] { '\r', '\n', ',' }, StringSplitOptions.RemoveEmptyEntries)).ToList();
+
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+            if (!InitializeMerakiApi())
+            {
+                ModelState.AddModelError(string.Empty, "Failed to initialize Meraki API.");
+                return View(model);
+            }
+            try
+            {
+                foreach (string serial in model.SerialNumbers)
+                {
+                    await _merakiApi.SetDeviceAddressAsync(serial, model.Address, model.Notes);
+                    await Task.Delay(350); // ongeveer 3 calls per second
+                }
+                ViewBag.Message = "Devices location set successfully";
+                return View(model);
+            }
+            catch (HttpRequestException ex)
+            {
+                ModelState.AddModelError(string.Empty, $"Error: {ex.Message}");
+                return View(model);
+            }
+
         }
     }
 }

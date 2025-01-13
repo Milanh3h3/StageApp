@@ -185,7 +185,7 @@ namespace StageApp.Controllers
                 {
                     foreach (var (serial, name) in model.SerialNumbers.Zip(model.NewNames))
                     {
-                        await _merakiApi.RenameDeviceAsync(name, serial);
+                        await _merakiApi.RenameDeviceAsync(serial, name);
                         await Task.Delay(350); // ongeveer 3 calls per second
                     }
                     ViewBag.Message = "Devices renamed successfully";
@@ -332,7 +332,7 @@ namespace StageApp.Controllers
             }
             return RedirectToAction("Rename");
         }
-        // GET: Devices/Rename
+        // GET: Devices/RenameBackups
         [HttpGet]
         public IActionResult RenameBackups()
         {

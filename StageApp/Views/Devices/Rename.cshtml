@@ -34,7 +34,6 @@
                     <small class="form-text text-muted">Enter each new name on a new line.</small>
                 </div>
                 <div class="form-group form-check">
-                    <input type="hidden" name="MakeBackup" value="false" />
                     <input type="checkbox" class="form-check-input" id="MakeBackup" name="MakeBackup" value="true" />
                     <label class="form-check-label" for="MakeBackup">Backup device names</label>    
                 </div>
@@ -52,9 +51,8 @@
                     <small class="form-text text-muted">Allowed file types: .xls, .xlsx</small>
                 </div>
                 <div class="form-group form-check">
-                    <input type="hidden" name="MakeBackup" value="false" />
-                    <input type="checkbox" class="form-check-input" id="MakeBackup" name="MakeBackup" value="true" />
-                    <label class="form-check-label" for="MakeBackup">Backup device names</label>
+                    <input type="checkbox" class="form-check-input" id="MakeBackupBulk" name="MakeBackupBulk" value="true" />
+                    <label class="form-check-label" for="MakeBackupBulk">Backup device names</label>
                 </div>
                 <button type="submit" class="btn btn-primary">Confirm Bulk Rename</button>
             </form>

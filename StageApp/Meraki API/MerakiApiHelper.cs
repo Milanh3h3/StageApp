@@ -65,7 +65,7 @@ namespace StageApp.Meraki_API
             var jsonResponse = await response.Content.ReadAsStringAsync();
 
             var deviceDetails = System.Text.Json.JsonSerializer.Deserialize<Models.Device>(jsonResponse);
-            return deviceDetails?.Name ?? "Name not available";
+            return deviceDetails.name ?? "Name not available";
         }
         public async Task SetDeviceAddressAsync(string serialNumber, string address, string notes)
         {

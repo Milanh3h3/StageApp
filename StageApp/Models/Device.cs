@@ -7,7 +7,7 @@ namespace StageApp.Models
         [Key]
         public string? SerialNumber { get; set; }
         [Required]
-        public string? Name { get; set; }
+        public string? name { get; set; } // moet een kleine letter n hebben
         public string? Location { get; set; }
         /*
             "name": "My AP",

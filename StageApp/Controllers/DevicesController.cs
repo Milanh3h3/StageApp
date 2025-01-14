@@ -227,7 +227,7 @@ namespace StageApp.Controllers
             }
         }
         [HttpPost]
-        public async Task<IActionResult> RenameBulk(IFormFile excelFile, bool MakeBackup)
+        public async Task<IActionResult> RenameBulk(IFormFile excelFile, bool MakeBackupBulk)
         {
             if (!InitializeMerakiApi())
             {
@@ -239,7 +239,7 @@ namespace StageApp.Controllers
                 ModelState.AddModelError("", "Please upload a valid Excel file.");
                 return View("Rename");
             }
-            if (!MakeBackup)
+            if (!MakeBackupBulk)
             {
                 var tempFilePath = Path.GetTempFileName();
                 try
@@ -309,7 +309,7 @@ namespace StageApp.Controllers
                         await _merakiApi.RenameDeviceAsync(serial, Name);
                         await Task.Delay(350); // ongeveer 3 calls per second
                         string[] DataRow = [serial, OldName, Name];
-                        NamesAndSerials.Append(DataRow);
+                        NamesAndSerials.Add(DataRow);
                     }
                     string backupDirectory = Path.Combine("RenameBackups");
                     string fileName = $"Backup_{DateTime.Now:yyyy-MM-dd_HH-mm}.csv";

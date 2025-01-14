@@ -65,5 +65,22 @@ namespace StageApp.Controllers
                 return View(model);
             }
         }
+        public async Task<IActionResult> OrganizationID()
+        {
+            if (!InitializeMerakiApi())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+            try
+            {
+                var Organizations = await _merakiApi.GetOrganizations();
+                return View(Organizations);
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, $"Error fetching networks: {ex.Message}");
+                return View(new List<(string, string)>());
+            }
+        }
     }
 }

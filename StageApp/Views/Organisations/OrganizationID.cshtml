@@ -1,0 +1,32 @@
+﻿@model List<(string OrganizationId, string OrganizationName)>
+
+@{
+    ViewData["Title"] = "Organizations";
+}
+
+<h1>Organizations</h1>
+
+@if (!Model.Any())
+{
+    <p>No Organizations available or invalid API Key.</p>
+}
+else
+{
+    <table class="table table-striped mt-4">
+        <thead>
+            <tr>
+                <th>Organization ID</th>
+                <th>Organization Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var (OrganizationId, OrganizationName) in Model)
+            {
+                <tr>
+                    <td>@OrganizationId</td>
+                    <td>@OrganizationName</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

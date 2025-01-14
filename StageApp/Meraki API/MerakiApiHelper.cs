@@ -88,6 +88,19 @@ namespace StageApp.Meraki_API
             });
             return networks.Select(network => (network.Id, network.Name)).ToList();
         }
+        public async Task<List<(string NetworkId, string NetworkName)>> GetOrganizations()
+        {
+            var url = $"{BaseUrl}/organizations/";
+            HttpResponseMessage response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+
+            var jsonResponse = await response.Content.ReadAsStringAsync();
+            var Organizations = System.Text.Json.JsonSerializer.Deserialize<List<Models.Organization>>(jsonResponse, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+            return Organizations.Select(Organization => (Organization.Id, Organization.Name)).ToList();
+        }
         private StringContent GetJsonContent(object payload)
         {
             var json = System.Text.Json.JsonSerializer.Serialize(payload);

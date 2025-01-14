@@ -8,6 +8,7 @@ namespace StageApp.ViewModels
         public string? Name { get; set; }
         public List<string> SelectedNetworkTypes { get; set; } = new List<string>();
         public string? Timezone { get; set; }
+        public IEnumerable<SelectListItem> Organizations { get; set; } = new List<SelectListItem>();
 
         public IEnumerable<SelectListItem> NetworkTypes = new List<SelectListItem>
         {

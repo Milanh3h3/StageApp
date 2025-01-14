@@ -37,16 +37,33 @@ namespace StageApp.Controllers
 
         // GET: Devices/Create
         [HttpGet]
-        public IActionResult Claim()
+        public async Task<IActionResult> Claim()
         {
             if (!InitializeMerakiApi())
             {
                 return RedirectToAction("Index", "Home");
             }
 
-            var model = new ClaimDevicesViewModel();
-            return View(model);
+            var organizations = await _merakiApi.GetOrganizations();
+            var viewModel = new ClaimDevicesViewModel
+            {
+                Organizations = organizations.Select(o => new SelectListItem { Value = o.OrganizationId, Text = o.OrganizationName })
+            };
+
+            return View(viewModel);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetNetworks(string organizationId)
+        {
+            if (!InitializeMerakiApi())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+            var networks = await _merakiApi.GetNetworks(organizationId);
+            return Json(networks);
+        }
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]

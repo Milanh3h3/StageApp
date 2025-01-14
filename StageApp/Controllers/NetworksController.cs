@@ -31,15 +31,19 @@ namespace StageApp.Controllers
 
         // GET: Networks/Create
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
             if (!InitializeMerakiApi())
             {
                 return RedirectToAction("Index", "Home");
             }
+            var organizations = await _merakiApi.GetOrganizations();
+            var viewModel = new CreateNetworkViewModel
+            {
+                Organizations = organizations.Select(o => new SelectListItem { Value = o.OrganizationId, Text = o.OrganizationName })
+            };
 
-            var model = new CreateNetworkViewModel();
-            return View(model);
+            return View(viewModel);
         }
 
         [HttpPost]

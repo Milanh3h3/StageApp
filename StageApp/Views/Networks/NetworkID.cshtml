@@ -1,0 +1,40 @@
+﻿@model List<(string NetworkId, string NetworkName)>
+
+@{
+    ViewData["Title"] = "Networks";
+}
+
+<h1>Networks</h1>
+
+<form method="get" asp-action="NetworkID">
+    <div class="form-group">
+        <label for="organizationId">Organization ID</label>
+        <input type="text" class="form-control" id="organizationId" name="organizationId" placeholder="Enter Organization ID" required />
+    </div>
+    <button type="submit" class="btn btn-primary">Fetch Networks</button>
+</form>
+
+@if (!Model.Any())
+{
+    <p>No networks available or invalid Organization ID.</p>
+}
+else
+{
+    <table class="table table-striped mt-4">
+        <thead>
+            <tr>
+                <th>Network ID</th>
+                <th>Network Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var (networkId, networkName) in Model)
+            {
+                <tr>
+                    <td>@networkId</td>
+                    <td>@networkName</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

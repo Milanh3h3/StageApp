@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Meraki.Api.Data;
+using Newtonsoft.Json;
 using StageApp.Models;
 using System.Net.Http.Headers;
 using System.Text;
@@ -63,7 +64,7 @@ namespace StageApp.Meraki_API
 
             var jsonResponse = await response.Content.ReadAsStringAsync();
 
-            var deviceDetails = System.Text.Json.JsonSerializer.Deserialize<Device>(jsonResponse); // ik hoop dat de Device class niet precies hetzelfde hoeft te zijn als de jsonresponse... anders staat het response voorbeeld in de device class
+            var deviceDetails = System.Text.Json.JsonSerializer.Deserialize<Models.Device>(jsonResponse);
             return deviceDetails?.Name ?? "Name not available";
         }
         public async Task SetDeviceAddressAsync(string serialNumber, string address, string notes)
@@ -73,6 +74,19 @@ namespace StageApp.Meraki_API
 
             var response = await _httpClient.PutAsync(url, GetJsonContent(payload));
             response.EnsureSuccessStatusCode();
+        }
+        public async Task<List<(string NetworkId, string NetworkName)>> GetNetworks(string organizationId)
+        {
+            var url = $"{BaseUrl}/organizations/{organizationId}/networks";
+            HttpResponseMessage response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+
+            var jsonResponse = await response.Content.ReadAsStringAsync();
+            var networks = System.Text.Json.JsonSerializer.Deserialize<List<Models.Network>>(jsonResponse, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+            return networks.Select(network => (network.Id, network.Name)).ToList();
         }
         private StringContent GetJsonContent(object payload)
         {

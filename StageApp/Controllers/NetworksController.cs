@@ -69,5 +69,29 @@ namespace StageApp.Controllers
                 return View(model);
             }
         }
+        public async Task<IActionResult> NetworkID(string organizationId)
+        {
+            if (!InitializeMerakiApi())
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            if (string.IsNullOrEmpty(organizationId))
+            {
+                ModelState.AddModelError(string.Empty, "Organization ID is required.");
+                return View(new List<(string, string)>());
+            }
+
+            try
+            {
+                var networks = await _merakiApi.GetNetworks(organizationId);
+                return View(networks);
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, $"Error fetching networks: {ex.Message}");
+                return View(new List<(string, string)>());
+            }
+        }
     }
 }

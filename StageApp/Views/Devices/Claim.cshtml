@@ -21,14 +21,17 @@
                 </div>
             }
 
-            <form asp-action="Claim" asp-controller="Devices" method="post">
-                <p class="text-center">Note: You can claim multiple devices by entering their serial numbers, one per line. For recently claimed devices, it may take a few minutes for API requests against that device to succeed</p>
+            <form asp-action="UpdateNetworks" asp-controller="Devices" method="post">
                 <div class="form-group">
                     <label for="OrganizationId">Organization</label>
-                    <select class="form-control" id="OrganizationId" name="OrganizationId" asp-items="Model.Organizations" onchange="updateNetworks(this.value)" required>
+                    <select class="form-control" id="OrganizationId" name="OrganizationId" asp-items="Model.Organizations" onchange="this.form.submit()" required>
                         <option value="">Select an organization</option>
                     </select>
                 </div>
+            </form>
+
+            <form asp-action="Claim" asp-controller="Devices" method="post">
+                @Html.AntiForgeryToken()
                 <div class="form-group">
                     <label for="NetworkId">Network</label>
                     <select class="form-control" id="NetworkId" name="NetworkId" asp-items="Model.Networks" required>
@@ -40,6 +43,7 @@
                     <textarea class="form-control" id="SerialNumbers" name="SerialNumbers" rows="4" placeholder="Enter each serial number on a new line" required></textarea>
                     <small class="form-text text-muted">Enter each serial number on a new line.</small>
                 </div>
+
                 <button type="submit" class="btn btn-primary">Claim Devices</button>
             </form>
         </div>
@@ -64,24 +68,3 @@
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
 }
-<script>
-    async function updateNetworks(organizationId) {
-        const networkDropdown = document.getElementById('NetworkId');
-        networkDropdown.innerHTML = '<option value="">Loading...</option>';
-
-        try {
-            const response = await fetch(`/Devices/GetNetworks?organizationId=${organizationId}`);
-            const networks = await response.json();
-
-            networkDropdown.innerHTML = '<option value="">Select a network</option>';
-            networks.forEach(network => {
-                const option = document.createElement('option');
-                option.value = network.networkId;
-                option.textContent = network.networkName;
-                networkDropdown.appendChild(option);
-            });
-        } catch (error) {
-            console.error('Error loading networks:', error);
-        }
-    }
-</script>

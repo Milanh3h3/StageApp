@@ -35,7 +35,7 @@ namespace StageApp.Controllers
             return false;
         }
 
-        // GET: Devices/Create
+        // GET: Devices/Claim
         [HttpGet]
         public async Task<IActionResult> Claim()
         {
@@ -47,23 +47,44 @@ namespace StageApp.Controllers
             var organizations = await _merakiApi.GetOrganizations();
             var model = new ClaimDevicesViewModel
             {
-                Organizations = organizations.Select(o => new SelectListItem { Value = o.OrganizationId, Text = o.OrganizationName })
+                Organizations = organizations.Select(o => new SelectListItem
+                {
+                    Value = o.OrganizationId,
+                    Text = o.OrganizationName
+                }).ToList(),
+                Networks = new List<SelectListItem>() // Initially empty
             };
 
             return View(model);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetNetworks(string organizationId)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateNetworks(ClaimDevicesViewModel model)
         {
             if (!InitializeMerakiApi())
             {
-                return RedirectToAction("Index", "Home");
+                ModelState.AddModelError(string.Empty, "Failed to initialize Meraki API.");
+                return RedirectToAction(nameof(Claim));
             }
-            var networks = await _merakiApi.GetNetworks(organizationId);
-            return Json(networks);
-        }
+            var organizations = await _merakiApi.GetOrganizations();
+            var networks = await _merakiApi.GetNetworks(model.OrganizationId);
 
+            model.Organizations = organizations.Select(o => new SelectListItem
+            {
+                Value = o.OrganizationId,
+                Text = o.OrganizationName,
+                Selected = o.OrganizationId == model.OrganizationId
+            }).ToList();
+
+            model.Networks = networks.Select(n => new SelectListItem
+            {
+                Value = n.NetworkId,
+                Text = n.NetworkName
+            }).ToList();
+
+            return View("Claim", model);
+        }
 
         [HttpPost]
         [ValidateAntiForgeryToken]

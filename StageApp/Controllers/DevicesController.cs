@@ -35,17 +35,55 @@ namespace StageApp.Controllers
             return false;
         }
 
-        // GET: Devices/Create
+        // GET: Devices/Claim
         [HttpGet]
-        public IActionResult Claim()
+        public async Task<IActionResult> Claim()
         {
             if (!InitializeMerakiApi())
             {
                 return RedirectToAction("Index", "Home");
             }
 
-            var model = new ClaimDevicesViewModel();
+            var organizations = await _merakiApi.GetOrganizations();
+            var model = new ClaimDevicesViewModel
+            {
+                Organizations = organizations.Select(o => new SelectListItem
+                {
+                    Value = o.OrganizationId,
+                    Text = o.OrganizationName
+                }).ToList(),
+                Networks = new List<SelectListItem>() // Initially empty
+            };
+
             return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateNetworks(ClaimDevicesViewModel model)
+        {
+            if (!InitializeMerakiApi())
+            {
+                ModelState.AddModelError(string.Empty, "Failed to initialize Meraki API.");
+                return RedirectToAction(nameof(Claim));
+            }
+            var organizations = await _merakiApi.GetOrganizations();
+            var networks = await _merakiApi.GetNetworks(model.OrganizationId);
+
+            model.Organizations = organizations.Select(o => new SelectListItem
+            {
+                Value = o.OrganizationId,
+                Text = o.OrganizationName,
+                Selected = o.OrganizationId == model.OrganizationId
+            }).ToList();
+
+            model.Networks = networks.Select(n => new SelectListItem
+            {
+                Value = n.NetworkId,
+                Text = n.NetworkName
+            }).ToList();
+
+            return View("Claim", model);
         }
 
         [HttpPost]
@@ -66,11 +104,16 @@ namespace StageApp.Controllers
             {
                 await _merakiApi.ClaimDevicesAsync(model.NetworkId, model.SerialNumbers);
                 ViewBag.Message = "Devices claimed successfully";
+                var organizations = await _merakiApi.GetOrganizations();
+                model.Organizations = organizations.Select(o => new SelectListItem { Value = o.OrganizationId, Text = o.OrganizationName });
                 return View(model);
             }
             catch (HttpRequestException ex)
             {
                 ModelState.AddModelError(string.Empty, $"Error: {ex.Message}");
+                var organizations = await _merakiApi.GetOrganizations();
+                model.Organizations = organizations.Select(o => new SelectListItem { Value = o.OrganizationId, Text = o.OrganizationName });
+
                 return View(model);
             }
         }

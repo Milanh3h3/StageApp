@@ -88,7 +88,7 @@ namespace StageApp.Meraki_API
             });
             return networks.Select(network => (network.Id, network.Name)).ToList();
         }
-        public async Task<List<(string NetworkId, string NetworkName)>> GetOrganizations()
+        public async Task<List<(string OrganizationId, string OrganizationName)>> GetOrganizations()
         {
             var url = $"{BaseUrl}/organizations/";
             HttpResponseMessage response = await _httpClient.GetAsync(url);

@@ -31,14 +31,18 @@ namespace StageApp.Controllers
 
         // GET: Networks/Create
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
             if (!InitializeMerakiApi())
             {
                 return RedirectToAction("Index", "Home");
             }
+            var organizations = await _merakiApi.GetOrganizations();
+            var model = new CreateNetworkViewModel
+            {
+                Organizations = organizations.Select(o => new SelectListItem { Value = o.OrganizationId, Text = o.OrganizationName })
+            };
 
-            var model = new CreateNetworkViewModel();
             return View(model);
         }
 
@@ -61,11 +65,15 @@ namespace StageApp.Controllers
                 string[] productTypes = model.SelectedNetworkTypes.ToArray();
                 await _merakiApi.CreateNetworkAsync(model.OrganizationId, model.Name, productTypes, model.Timezone);
                 ViewBag.Message = $"Network '{model.Name}' created successfully!";
+                var organizations = await _merakiApi.GetOrganizations();
+                model.Organizations = organizations.Select(o => new SelectListItem { Value = o.OrganizationId, Text = o.OrganizationName });
                 return View(model);
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, $"Error: {ex.Message}");
+                var organizations = await _merakiApi.GetOrganizations();
+                model.Organizations = organizations.Select(o => new SelectListItem { Value = o.OrganizationId, Text = o.OrganizationName });
                 return View(model);
             }
         }

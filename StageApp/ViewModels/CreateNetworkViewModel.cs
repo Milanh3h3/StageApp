@@ -19,7 +19,6 @@ namespace StageApp.ViewModels
             new SelectListItem("Camera", "camera"),
             new SelectListItem("EMM (Systems manager)", "systemsManager"),
             new SelectListItem("Cellular gateway", "cellularGateway"),
-            new SelectListItem("SecureConnect", "secureConnect"),
             new SelectListItem("Wireless LAN controller", "wirelessController")
         };
         public IEnumerable<SelectListItem> Timezones = new List<SelectListItem>

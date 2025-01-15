@@ -45,12 +45,12 @@ namespace StageApp.Controllers
             }
 
             var organizations = await _merakiApi.GetOrganizations();
-            var viewModel = new ClaimDevicesViewModel
+            var model = new ClaimDevicesViewModel
             {
                 Organizations = organizations.Select(o => new SelectListItem { Value = o.OrganizationId, Text = o.OrganizationName })
             };
 
-            return View(viewModel);
+            return View(model);
         }
 
         [HttpGet]
@@ -83,11 +83,16 @@ namespace StageApp.Controllers
             {
                 await _merakiApi.ClaimDevicesAsync(model.NetworkId, model.SerialNumbers);
                 ViewBag.Message = "Devices claimed successfully";
+                var organizations = await _merakiApi.GetOrganizations();
+                model.Organizations = organizations.Select(o => new SelectListItem { Value = o.OrganizationId, Text = o.OrganizationName });
                 return View(model);
             }
             catch (HttpRequestException ex)
             {
                 ModelState.AddModelError(string.Empty, $"Error: {ex.Message}");
+                var organizations = await _merakiApi.GetOrganizations();
+                model.Organizations = organizations.Select(o => new SelectListItem { Value = o.OrganizationId, Text = o.OrganizationName });
+
                 return View(model);
             }
         }

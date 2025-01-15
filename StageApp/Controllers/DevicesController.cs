@@ -129,7 +129,7 @@ namespace StageApp.Controllers
             if (excelFile == null || excelFile.Length == 0)
             {
                 ModelState.AddModelError("", "Please upload a valid Excel file.");
-                return View("Claim");
+                return RedirectToAction("Claim");
             }
 
             var tempFilePath = Path.GetTempFileName();
@@ -144,7 +144,7 @@ namespace StageApp.Controllers
                 if (excelData == null || excelData.Count == 0)
                 {
                     ModelState.AddModelError("", "The uploaded file is empty or invalid.");
-                    return View("Claim");
+                    return RedirectToAction("Claim");
                 }
 
                 var devicesByNetwork = new Dictionary<string, List<string>>();
@@ -175,7 +175,7 @@ namespace StageApp.Controllers
             catch (Exception ex)
             {
                 ModelState.AddModelError("", $"An error occurred while processing the file: {ex.Message}");
-                return View("Claim");
+                return RedirectToAction("Claim");
             }
             finally
             {
@@ -280,7 +280,7 @@ namespace StageApp.Controllers
             if (excelFile == null || excelFile.Length == 0)
             {
                 ModelState.AddModelError("", "Please upload a valid Excel file.");
-                return View("Rename");
+                return RedirectToAction("Rename");
             }
             if (!MakeBackupBulk)
             {
@@ -296,7 +296,7 @@ namespace StageApp.Controllers
                     if (excelData == null || excelData.Count == 0)
                     {
                         ModelState.AddModelError("", "The uploaded file is empty or invalid.");
-                        return View("Rename");
+                        return RedirectToAction("Rename");
                     }
                     foreach (var row in excelData)
                     {
@@ -312,7 +312,7 @@ namespace StageApp.Controllers
                 catch (Exception ex)
                 {
                     ModelState.AddModelError("", $"An error occurred while processing the file: {ex.Message}");
-                    return View("Rename");
+                    return RedirectToAction("Rename");
                 }
                 finally
                 {
@@ -336,7 +336,7 @@ namespace StageApp.Controllers
                     if (excelData == null || excelData.Count == 0)
                     {
                         ModelState.AddModelError("", "The uploaded file is empty or invalid.");
-                        return View("Rename");
+                        return RedirectToAction("Rename");
                     }
                     List<string[]> NamesAndSerials = [];
                     string[] Header = ["Serial Numbers", "Old Names", "New Names"];
@@ -362,7 +362,7 @@ namespace StageApp.Controllers
                 catch (Exception ex)
                 {
                     ModelState.AddModelError("", $"An error occurred while processing the file: {ex.Message}");
-                    return View("Rename");
+                    return RedirectToAction("Rename");
                 }
                 finally
                 {
@@ -461,7 +461,7 @@ namespace StageApp.Controllers
             if (excelFile == null || excelFile.Length == 0)
             {
                 ModelState.AddModelError("", "Please upload a valid Excel file.");
-                return View("SetLocation");
+                return RedirectToAction("SetLocation");
             }
 
             var tempFilePath = Path.GetTempFileName();
@@ -476,7 +476,7 @@ namespace StageApp.Controllers
                 if (excelData == null || excelData.Count == 0)
                 {
                     ModelState.AddModelError("", "The uploaded file is empty or invalid.");
-                    return View("SetLocation");
+                    return RedirectToAction("SetLocation");
                 }
                 foreach (var row in excelData)
                 {
@@ -493,7 +493,7 @@ namespace StageApp.Controllers
             catch (Exception ex)
             {
                 ModelState.AddModelError("", $"An error occurred while processing the file: {ex.Message}");
-                return View("SetLocation");
+                return RedirectToAction("SetLocation");
             }
             finally
             {

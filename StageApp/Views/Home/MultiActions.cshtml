@@ -1,0 +1,31 @@
+﻿<h1>MultiActions</h1>
+<div class="container form-container">
+    <div class="row">
+        <div class="col-md-6 form-section">
+            @if (!string.IsNullOrEmpty(ViewBag.Message))
+            {
+                <div class="alert alert-success">
+                    @ViewBag.Message
+                </div>
+            }
+
+            @if (ViewData.ModelState.Count > 0 && !ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    <strong>Error:</strong> Please correct the errors below.
+                </div>
+            }
+            <h3>MultiActions</h3>
+            <p>Make sure the excel file looks like this: doe maar wat</p>
+            <p>Note: multiple devices can be claimed in different networks. For longer files make sure to refresh the API Key before Confirming.</p>
+            <form asp-action="MultiActions" asp-controller="Home" method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="ExcelFile">Upload Excel File</label>
+                    <input type="file" class="form-control" id="ExcelFile" name="ExcelFile" accept=".xls,.xlsx" required />
+                    <small class="form-text text-muted">Allowed file types: .xls, .xlsx</small>
+                </div>
+                <button type="submit" class="btn btn-primary">Confirm MultiActions</button>
+            </form>
+        </div>
+    </div>
+</div>

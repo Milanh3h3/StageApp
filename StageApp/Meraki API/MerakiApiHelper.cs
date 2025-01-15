@@ -101,6 +101,14 @@ namespace StageApp.Meraki_API
             });
             return Organizations.Select(Organization => (Organization.Id, Organization.Name)).ToList();
         }
+        public async Task SetDeviceDataAsync(string serialNumber, string name, string address, string notes)
+        {
+            var url = $"{BaseUrl}/devices/{serialNumber}";
+            var payload = new { name, address, notes };
+
+            var response = await _httpClient.PutAsync(url, GetJsonContent(payload));
+            response.EnsureSuccessStatusCode();
+        }
         private StringContent GetJsonContent(object payload)
         {
             var json = System.Text.Json.JsonSerializer.Serialize(payload);

@@ -12,10 +12,10 @@ namespace StageApp.ViewModels
 
         public IEnumerable<SelectListItem> NetworkTypes = new List<SelectListItem>
         {
-            new SelectListItem("Appliance", "appliance"),
-            new SelectListItem("Switch", "switch"),
+            new SelectListItem("Appliance", "appliance"), // Fw Rt
+            new SelectListItem("Switch", "switch"),  // sw ms
             new SelectListItem("Sensor", "sensor"),
-            new SelectListItem("Wireless", "wireless"),
+            new SelectListItem("Wireless", "wireless"), // ap
             new SelectListItem("Camera", "camera"),
             new SelectListItem("EMM (Systems manager)", "systemsManager"),
             new SelectListItem("Cellular gateway", "cellularGateway"),

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using StageApp.Excel;
 using StageApp.Meraki_API;
 using StageApp.Models;
+using StageApp.Refactoring;
 using System.Diagnostics;
 
 namespace StageApp.Controllers
@@ -54,7 +55,7 @@ namespace StageApp.Controllers
             }
             return false;
         }
-        public IActionResult MultiActions()
+        public IActionResult NetworkDeployer()
         {
             if (!InitializeMerakiApi())
             {
@@ -65,7 +66,7 @@ namespace StageApp.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> MultiActions(IFormFile excelFile)
+        public async Task<IActionResult> NetworkDeployer(IFormFile excelFile)
         {
 
             if (!InitializeMerakiApi())
@@ -76,7 +77,7 @@ namespace StageApp.Controllers
             if (excelFile == null || excelFile.Length == 0)
             {
                 ModelState.AddModelError("", "Please upload a valid Excel file.");
-                return RedirectToAction("MultiActions");
+                return RedirectToAction("NetworkDeployer");
             }
 
             var tempFilePath = Path.GetTempFileName();
@@ -88,12 +89,13 @@ namespace StageApp.Controllers
                 }
 
                 var excelData = ExcelReader.GetExcelTabs(tempFilePath);
-                UserInputControl.InputControlMultiActions(excelData); // doe hier nog iets mee
+                UserInputControl.InputControlNetworkDeployer(excelData); // doe hier nog iets mee
                 if (excelData == null || excelData.Count == 0)
                 {
                     ModelState.AddModelError("", "The uploaded file is empty or invalid.");
-                    return RedirectToAction("MultiActions");
+                    return RedirectToAction("NetworkDeployer");
                 }
+
                 //maken van netwerken
                 var networksFromExcel = excelData["Networks"];
                 var organizations = await _merakiApi.GetOrganizations();
@@ -105,7 +107,7 @@ namespace StageApp.Controllers
                     {
                         usedOrganizationIds.Add(organizationId);
                     }
-                    string[] productTypes = [""]; // TODO Productypes uit namen van producten halen
+                    string[] productTypes = HomeRF.GetProductTypes(excelData, network[1]);
                     _merakiApi.CreateNetworkAsync(organizationId, network[1], productTypes, network[2]);
                     await Task.Delay(350); // ongeveer 3 calls per second
                 }
@@ -151,7 +153,7 @@ namespace StageApp.Controllers
             catch (Exception ex)
             {
                 ModelState.AddModelError("", $"An error occurred while processing the file: {ex.Message}");
-                return RedirectToAction("MultiActions");
+                return RedirectToAction("NetworkDeployer");
             }
             finally
             {
@@ -163,7 +165,6 @@ namespace StageApp.Controllers
 
             return RedirectToAction(nameof(Index));
         }
-
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()

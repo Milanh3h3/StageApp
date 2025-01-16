@@ -89,66 +89,72 @@ namespace StageApp.Controllers
                 }
 
                 var excelData = ExcelReader.GetExcelTabs(tempFilePath);
-                UserInputControl.InputControlNetworkDeployer(excelData); // doe hier nog iets mee
-                if (excelData == null || excelData.Count == 0)
-                {
-                    ModelState.AddModelError("", "The uploaded file is empty or invalid.");
-                    return RedirectToAction("NetworkDeployer");
-                }
-
-                //maken van netwerken
-                var networksFromExcel = excelData["Networks"];
                 var organizations = await _merakiApi.GetOrganizations();
-                List<string> usedOrganizationIds = new List<string>(); // bijhouden voor netwerk ID's terug te vinden
-                foreach (var network in networksFromExcel)
+                string Inputcontrolresult = UserInputControl.InputControlNetworkDeployer(excelData, organizations); 
+                if ( Inputcontrolresult == string.Empty)
                 {
-                    string organizationId = organizations.FirstOrDefault(org => org.OrganizationName == network[0]).OrganizationId;
-                    if (!string.IsNullOrEmpty(organizationId) && !usedOrganizationIds.Contains(organizationId))
-                    {
-                        usedOrganizationIds.Add(organizationId);
-                    }
-                    string[] productTypes = HomeRF.GetProductTypes(excelData, network[1]);
-                    _merakiApi.CreateNetworkAsync(organizationId, network[1], productTypes, network[2]);
-                    await Task.Delay(350); // ongeveer 3 calls per second
-                }
-                //achterhalen van networkIDs
-                List<(string NetworkId, string NetworkName)> networks = [];
-                foreach (var OrgId in usedOrganizationIds)
-                {
-                    networks.AddRange(await _merakiApi.GetNetworks(OrgId));
-                    await Task.Delay(350); // ongeveer 3 calls per second
-                }
+                    // feedback geven dat file succesvol is gelezen en gecontrolleerd
 
-                //claimen van devices
-                var devices = excelData["Devices"];
-                var devicesByNetwork = new Dictionary<string, List<string>>();
-                foreach (var device in devices)
-                {
-                    string serialNumber = device[8].Trim();
-                    string networkId = networks.FirstOrDefault(net => net.NetworkName == device[0]).NetworkId;
-                    if (!devicesByNetwork.ContainsKey(networkId))
+                    if (excelData == null || excelData.Count == 0)
                     {
-                        devicesByNetwork[networkId] = new List<string>();
+                        ModelState.AddModelError("", "The uploaded file is empty or invalid.");
+                        return RedirectToAction("NetworkDeployer");
                     }
-                    devicesByNetwork[networkId].Add(serialNumber);
-                }
-                foreach (var kvp in devicesByNetwork)
-                {
-                    string networkId = kvp.Key;
-                    List<string> serialNumbers = kvp.Value;
-                    await _merakiApi.ClaimDevicesAsync(networkId, serialNumbers);
-                    await Task.Delay(350); // ongeveer 3 calls per second
-                }
-                //TODO
-                //Timer of iets van oplossing voor cooldown na claimen
-                //IP-Address	SubnetMask	Gateway	DNS1	DNS2	VLAN
 
-                //Device_name   Location	Notes
-                foreach (var device in devices)
-                {
-                    await _merakiApi.SetDeviceDataAsync(device[8].Trim(), device[1].Trim(), device[9].Trim(), device[10].Trim());
-                    await Task.Delay(350); // ongeveer 3 calls per second
+                    //maken van netwerken
+                    var networksFromExcel = excelData["Networks"];
+                    List<string> usedOrganizationIds = new List<string>(); // bijhouden voor netwerk ID's terug te vinden
+                    foreach (var network in networksFromExcel)
+                    {
+                        string organizationId = organizations.FirstOrDefault(org => org.OrganizationName == network[0]).OrganizationId;
+                        if (!string.IsNullOrEmpty(organizationId) && !usedOrganizationIds.Contains(organizationId))
+                        {
+                            usedOrganizationIds.Add(organizationId);
+                        }
+                        string[] productTypes = HomeRF.GetProductTypes(excelData, network[1]);
+                        _merakiApi.CreateNetworkAsync(organizationId, network[1], productTypes, network[2]);
+                        await Task.Delay(350); // ongeveer 3 calls per second
+                    }
+                    //achterhalen van networkIDs
+                    List<(string NetworkId, string NetworkName)> networks = [];
+                    foreach (var OrgId in usedOrganizationIds)
+                    {
+                        networks.AddRange(await _merakiApi.GetNetworks(OrgId));
+                        await Task.Delay(350); // ongeveer 3 calls per second
+                    }
+
+                    //claimen van devices
+                    var devices = excelData["Devices"];
+                    var devicesByNetwork = new Dictionary<string, List<string>>();
+                    foreach (var device in devices)
+                    {
+                        string serialNumber = device[8].Trim();
+                        string networkId = networks.FirstOrDefault(net => net.NetworkName == device[0]).NetworkId;
+                        if (!devicesByNetwork.ContainsKey(networkId))
+                        {
+                            devicesByNetwork[networkId] = new List<string>();
+                        }
+                        devicesByNetwork[networkId].Add(serialNumber);
+                    }
+                    foreach (var kvp in devicesByNetwork)
+                    {
+                        string networkId = kvp.Key;
+                        List<string> serialNumbers = kvp.Value;
+                        await _merakiApi.ClaimDevicesAsync(networkId, serialNumbers);
+                        await Task.Delay(350); // ongeveer 3 calls per second
+                    }
+                    //TODO
+                    //Timer of iets van oplossing voor cooldown na claimen
+                    //IP-Address	SubnetMask	Gateway	DNS1	DNS2	VLAN
+
+                    //Device_name   Location	Notes
+                    foreach (var device in devices)
+                    {
+                        await _merakiApi.SetDeviceDataAsync(device[8].Trim(), device[1].Trim(), device[9].Trim(), device[10].Trim());
+                        await Task.Delay(350); // ongeveer 3 calls per second
+                    }
                 }
+                else { /* gebruik om feedback te geven waar het misgaat Inputcontrolresult;*/ }
             }
             catch (Exception ex)
             {

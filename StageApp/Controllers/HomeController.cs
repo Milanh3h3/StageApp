@@ -1,10 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Shared;
+using NuGet.Common;
 using StageApp.Excel;
 using StageApp.Meraki_API;
 using StageApp.Models;
 using StageApp.Refactoring;
 using System.Diagnostics;
+using System.Security.Claims;
 
 namespace StageApp.Controllers
 {
@@ -12,7 +15,7 @@ namespace StageApp.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private MerakiApiHelper? _merakiApi;
-
+        public static string _statusMessage = string.Empty;
         public HomeController(ILogger<HomeController> logger)
         {
             _logger = logger;
@@ -37,7 +40,7 @@ namespace StageApp.Controllers
             CookieOptions options = new CookieOptions
             {
                 HttpOnly = true, // Prevent client-side scripts from accessing the cookie
-                Expires = DateTimeOffset.UtcNow.AddMinutes(30), // Set an expiration time
+                Expires = DateTimeOffset.UtcNow.AddMinutes(240), // Set an expiration time
                 SameSite = SameSiteMode.Strict,
                 Secure = true,
             };
@@ -51,6 +54,15 @@ namespace StageApp.Controllers
             if (Request.Cookies.TryGetValue("API_Key", out string? apiKey) && !string.IsNullOrEmpty(apiKey))
             {
                 _merakiApi = new MerakiApiHelper(apiKey);
+                return true;
+            }
+            return false;
+        }
+        private bool InitializeMerakiApiForHomrRF()
+        {
+            if (Request.Cookies.TryGetValue("API_Key", out string? apiKey) && !string.IsNullOrEmpty(apiKey))
+            {
+                HomeRF._merakiApi = new MerakiApiHelper(apiKey);
                 return true;
             }
             return false;
@@ -90,32 +102,32 @@ namespace StageApp.Controllers
 
                 var excelData = ExcelReader.GetExcelTabs(tempFilePath);
                 var organizations = await _merakiApi.GetOrganizations();
+                _statusMessage = "Bestand aan het controleren";
                 string Inputcontrolresult = UserInputControl.InputControlNetworkDeployer(excelData, organizations); 
                 if ( Inputcontrolresult == string.Empty)
                 {
-                    // feedback geven dat file succesvol is gelezen en gecontrolleerd
-
+                    _statusMessage = "Bestand succesvol ingelezen en gecontrolleerd";
                     if (excelData == null || excelData.Count == 0)
                     {
                         ModelState.AddModelError("", "The uploaded file is empty or invalid.");
                         return RedirectToAction("NetworkDeployer");
                     }
 
-                    //maken van netwerken
+                    _statusMessage = "Bezig met het maken van netwerken";
                     var networksFromExcel = excelData["Networks"];
                     List<string> usedOrganizationIds = new List<string>(); // bijhouden voor netwerk ID's terug te vinden
                     foreach (var network in networksFromExcel)
                     {
-                        string organizationId = organizations.FirstOrDefault(org => org.OrganizationName == network[0]).OrganizationId;
+                        string organizationId = organizations.FirstOrDefault(org => org.OrganizationName == network[0].Trim()).OrganizationId;
                         if (!string.IsNullOrEmpty(organizationId) && !usedOrganizationIds.Contains(organizationId))
                         {
                             usedOrganizationIds.Add(organizationId);
                         }
-                        string[] productTypes = HomeRF.GetProductTypes(excelData, network[1]);
-                        _merakiApi.CreateNetworkAsync(organizationId, network[1], productTypes, network[2]);
+                        string[] productTypes = HomeRF.GetProductTypes(excelData, network[1].Trim());
+                        _merakiApi.CreateNetworkAsync(organizationId, network[1].Trim(), productTypes, network[2].Trim());
                         await Task.Delay(350); // ongeveer 3 calls per second
                     }
-                    //achterhalen van networkIDs
+                    _statusMessage = "Bezig met het achterhalen van networkIDs";
                     List<(string NetworkId, string NetworkName)> networks = [];
                     foreach (var OrgId in usedOrganizationIds)
                     {
@@ -123,13 +135,13 @@ namespace StageApp.Controllers
                         await Task.Delay(350); // ongeveer 3 calls per second
                     }
 
-                    //claimen van devices
+                    _statusMessage = "Bezig met het claimen van devices";
                     var devices = excelData["Devices"];
                     var devicesByNetwork = new Dictionary<string, List<string>>();
                     foreach (var device in devices)
                     {
                         string serialNumber = device[8].Trim();
-                        string networkId = networks.FirstOrDefault(net => net.NetworkName == device[0]).NetworkId;
+                        string networkId = networks.FirstOrDefault(net => net.NetworkName == device[0].Trim()).NetworkId;
                         if (!devicesByNetwork.ContainsKey(networkId))
                         {
                             devicesByNetwork[networkId] = new List<string>();
@@ -143,10 +155,19 @@ namespace StageApp.Controllers
                         await _merakiApi.ClaimDevicesAsync(networkId, serialNumbers);
                         await Task.Delay(350); // ongeveer 3 calls per second
                     }
-                    //TODO
-                    //Timer of iets van oplossing voor cooldown na claimen
+                    _statusMessage = "Aan het wachten totdat Meraki de devices heeft geclaimed.";
+                    InitializeMerakiApiForHomrRF();
+                    string LastDeviceSerial = devices.FindLast(device => device.Length > 8)?[8];
+                    HomeRF.WaitForMeraki(LastDeviceSerial);
+                    _statusMessage = "Bezig met devices hun netwerkinformatie geven";
                     //IP-Address	SubnetMask	Gateway	DNS1	DNS2	VLAN
-
+                    foreach (var device in devices)
+                    {
+                        string[] DNSs = [device[5].Trim(), device[6].Trim()];
+                        await _merakiApi.SetDeviceWAN1Async(device[8].Trim(), Int32.Parse(device[7].Trim()), device[4].Trim(), device[2].Trim(), device[3].Trim(), DNSs);
+                        await Task.Delay(350); // ongeveer 3 calls per second
+                    }
+                    _statusMessage = "Bezig met devices hun informatie geven";
                     //Device_name   Location	Notes
                     foreach (var device in devices)
                     {
@@ -154,7 +175,31 @@ namespace StageApp.Controllers
                         await Task.Delay(350); // ongeveer 3 calls per second
                     }
                 }
-                else { /* gebruik om feedback te geven waar het misgaat Inputcontrolresult;*/ }
+                else 
+                {  // Beste stukje code
+                    _statusMessage = Inputcontrolresult;
+                    _statusMessage = Inputcontrolresult + ". Redirecting in 10...";
+                    await Task.Delay(1000);
+                    _statusMessage = Inputcontrolresult + ". Redirecting in 9...";
+                    await Task.Delay(1000);
+                    _statusMessage = Inputcontrolresult + ". Redirecting in 8...";
+                    await Task.Delay(1000);
+                    _statusMessage = Inputcontrolresult + ". Redirecting in 7...";
+                    await Task.Delay(1000);
+                    _statusMessage = Inputcontrolresult + ". Redirecting in 6...";
+                    await Task.Delay(1000);
+                    _statusMessage = Inputcontrolresult + ". Redirecting in 5...";
+                    await Task.Delay(1000);
+                    _statusMessage = Inputcontrolresult + ". Redirecting in 4...";
+                    await Task.Delay(1000);
+                    _statusMessage = Inputcontrolresult + ". Redirecting in 3...";
+                    await Task.Delay(1000);
+                    _statusMessage = Inputcontrolresult + ". Redirecting in 2...";
+                    await Task.Delay(1000);
+                    _statusMessage = Inputcontrolresult + ". Redirecting in 1...";
+                    await Task.Delay(1000);
+                    return RedirectToAction("NetworkDeployer");
+                }
             }
             catch (Exception ex)
             {
@@ -170,6 +215,12 @@ namespace StageApp.Controllers
             }
 
             return RedirectToAction(nameof(Index));
+        }
+        
+        [HttpGet]
+        public IActionResult GetStatus()
+        {
+            return Ok(new { status = _statusMessage });
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

@@ -109,6 +109,16 @@ namespace StageApp.Meraki_API
             var response = await _httpClient.PutAsync(url, GetJsonContent(payload));
             response.EnsureSuccessStatusCode();
         }
+
+        public async Task SetDeviceWAN1Async(string serialNumber, int vlan, string staticGatewayIp, string staticIp, string staticSubnetMask, string[] staticDns)
+        {
+            var wan1 = new{ vlan, staticGatewayIp, staticIp, staticSubnetMask, usingStaticIp = true, staticDns };
+            var url = $"{BaseUrl}/devices/{serialNumber}/managementInterface";
+            var payload = new {wan1};
+
+            var response = await _httpClient.PutAsync(url, GetJsonContent(payload));
+            response.EnsureSuccessStatusCode();
+        }
         private StringContent GetJsonContent(object payload)
         {
             var json = System.Text.Json.JsonSerializer.Serialize(payload);

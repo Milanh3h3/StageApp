@@ -1,9 +1,16 @@
-﻿using Microsoft.Identity.Client;
+﻿using Azure.Core;
+using Microsoft.Identity.Client;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Shared;
+using StageApp.Controllers;
+using StageApp.Meraki_API;
+using Microsoft.AspNetCore.Mvc;
 
 namespace StageApp.Refactoring
 {
     public class HomeRF
     {
+
+        public static MerakiApiHelper? _merakiApi;
         public static string[] GetProductTypes(Dictionary<string, List<string[]>> excelData, string network)
         {
             var devices = excelData["Devices"];
@@ -35,6 +42,27 @@ namespace StageApp.Refactoring
                 }
             }
             return productTypes.ToArray();
+        }
+        public static async void WaitForMeraki(string serial)
+        {
+            while (true)
+            {
+                try
+                {
+                    await _merakiApi.GetDeviceNameAsync(serial);
+                    HomeController._statusMessage = "Device geclaimed!";
+                    return;
+                }
+                catch
+                {
+                    for (int i = 60; i > 0; i--)
+                    {
+                        await Task.Delay(1000);
+                        HomeController._statusMessage = $"Aan het wachten totdat Meraki de devices heeft geclaimed. Retrying in {i}";
+                    }
+
+                }
+            }
         }
     }
 }

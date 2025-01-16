@@ -1,4 +1,4 @@
-﻿<h1>MultiActions</h1>
+﻿<h1>NetworksDeployer</h1>
 <div class="container form-container">
     <div class="row">
         <div class="col-md-6 form-section">
@@ -15,17 +15,68 @@
                     <strong>Error:</strong> Please correct the errors below.
                 </div>
             }
-            <h3>MultiActions</h3>
+            <div id="feedback"></div>
             <p>Make sure the excel file looks like this: doe maar wat</p>
             <p>Note: multiple devices can be claimed in different networks. For longer files make sure to refresh the API Key before Confirming.</p>
-            <form asp-action="MultiActions" asp-controller="Home" method="post" enctype="multipart/form-data">
+            <form asp-action="NetworkDeployer" asp-controller="Home" method="post" enctype="multipart/form-data" id="NetworkDeployerForm">
                 <div class="form-group">
                     <label for="ExcelFile">Upload Excel File</label>
                     <input type="file" class="form-control" id="ExcelFile" name="ExcelFile" accept=".xls,.xlsx" required />
                     <small class="form-text text-muted">Allowed file types: .xls, .xlsx</small>
                 </div>
-                <button type="submit" class="btn btn-primary">Confirm MultiActions</button>
+                <button type="submit" id="submitNetworkDeployer" class="btn btn-primary">Confirm NetworkDeployer</button>
             </form>
         </div>
     </div>
 </div>
+<script>
+    $('#submitNetworkDeployer').click(function (e) {
+        e.preventDefault(); // Voorkomt standaard formulierverzending
+
+        const formData = new FormData($('#NetworkDeployerForm')[0]); // Formulierdata ophalen
+
+        $.ajax({
+            url: '/Home/NetworkDeployer', // Endpoint van de actie
+            type: 'POST',
+            data: formData,
+            processData: false, // Nodig voor bestanden
+            contentType: false, // Nodig voor bestanden
+            success: function (response) {
+                // Toon succesbericht
+                $('#feedback').html('<div class="alert alert-success">Bestand succesvol geüpload: ' + response.message + '</div>');
+            },
+            error: function (xhr) {
+                // Toon foutbericht
+                $('#feedback').html('<div class="alert alert-danger">Er is een fout opgetreden tijdens het uploaden: ' + xhr.responseText + '</div>');
+            }
+        });
+    });
+    //thanks chatgpt
+    function pollStatus() {
+        $.get('/Home/GetStatus', function (data) {
+            $('#feedback').html(data.status);
+            if (data.status !== "Verwerking voltooid!") {
+                setTimeout(pollStatus, 1000); // Wacht 1 seconde en vraag opnieuw
+            }
+        });
+    }
+
+    $('#submitNetworkDeployer').click(function () {
+        const formData = new FormData($('#NetworkDeployerForm')[0]);
+
+        $.ajax({
+            url: '/Home/NetworkDeployer',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function () {
+                pollStatus(); // Start polling
+            },
+            error: function () {
+                alert('Er is een fout opgetreden tijdens het uploaden.');
+            }
+        });
+    });
+
+</script>

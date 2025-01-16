@@ -19,7 +19,7 @@ namespace StageApp.Excel
                 networksFromExcel.Remove(FirstRowTab1);
 
                 var devicesFromExcel = data["Devices"];
-                string[] FirstRowTab2 = networksFromExcel[0];
+                string[] FirstRowTab2 = devicesFromExcel[0];
                 if (FirstRowTab2[0].Trim() == "Network_name" && FirstRowTab2[1].Trim() == "Device_name" && FirstRowTab2[2].Trim() == "IP-Address" && FirstRowTab2[3].Trim() == "SubnetMask" && FirstRowTab2[4].Trim() == "Gateway" && FirstRowTab2[5].Trim() == "DNS1" && FirstRowTab2[6].Trim() == "DNS2" && FirstRowTab2[7].Trim() == "VLAN" && FirstRowTab2[8].Trim() == "Serial_Number" && FirstRowTab2[9].Trim() == "Location" && FirstRowTab2[10].Trim() == "Notes")
                 {
                     devicesFromExcel.Remove(FirstRowTab2);
@@ -31,10 +31,10 @@ namespace StageApp.Excel
                         if (!IsValidIpAddress(device[2].Trim())) { return $"IP address van {device[1]} is niet valid"; }
                         if (!IsValidIpAddress(device[3].Trim())) { return $"SubNetMask van {device[1]} is niet valid"; }
                         if (!IsValidIpAddress(device[4].Trim())) { return $"Gateway van {device[1]} is niet valid";  }
-                        if (!IsValidIpAddress(device[5].Trim())) {   return $"DNS1 van {device[1]} is niet valid"; }
-                        if (!string.IsNullOrEmpty(device[6].Trim()) || !IsValidIpAddress(device[6].Trim())) { return $"DNS2 van {device[1]} is niet valid";  }
+                        if (!IsValidIpAddress(device[5].Trim())) { return $"DNS1 van {device[1]} is niet valid"; }
+                        if (!string.IsNullOrEmpty(device[6].Trim()) && !IsValidIpAddress(device[6].Trim())) { return $"DNS2 van {device[1]} is niet valid";  }
                         if (!IsValidVlan(device[7].Trim())) { return $"Vlan van {device[1]} is niet valid";  }
-                        if (IsValidSerialNumber(device[8].Trim())) { return $"SerialNumber van {device[1]} is niet valid";  }
+                        if (!IsValidSerialNumber(device[8].Trim())) { return $"SerialNumber van {device[1]} is niet valid";  }
                     }
                     // Checken of de waarden van de networks geldig zijn
                     foreach (var network in networksFromExcel)

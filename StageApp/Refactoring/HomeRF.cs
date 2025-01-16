@@ -58,7 +58,7 @@ namespace StageApp.Refactoring
                     for (int i = 60; i > 0; i--)
                     {
                         await Task.Delay(1000);
-                        HomeController._statusMessage = $"Aan het wachten totdat Meraki de devices heeft geclaimed. Retrying in {i}";
+                        HomeController._statusMessage = $"Aan het wachten totdat Meraki de devices heeft geclaimed. Retrying in {i}s";
                     }
 
                 }

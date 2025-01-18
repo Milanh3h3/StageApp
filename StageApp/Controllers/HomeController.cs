@@ -124,7 +124,7 @@ namespace StageApp.Controllers
                             usedOrganizationIds.Add(organizationId);
                         }
                         string[] productTypes = HomeRF.GetProductTypes(excelData, network[1].Trim());
-                        _merakiApi.CreateNetworkAsync(organizationId, network[1].Trim(), productTypes, network[2].Trim());
+                        await _merakiApi.CreateNetworkAsync(organizationId, network[1].Trim(), productTypes, network[2].Trim());
                         await Task.Delay(350); // ongeveer 3 calls per second
                     }
                     _statusMessage = "Bezig met het achterhalen van networkIDs";

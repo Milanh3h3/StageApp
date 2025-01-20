@@ -30,42 +30,53 @@
     </div>
 </div>
 <script>
-    const processId = '@ViewBag.ProcessId';
-    // Function to get the status from the server
-    function getStatus() {
-        if (!processId) {
-            console.warn('Process ID is not available. Skipping fetch.');
-            return; // Exit the function if processId is not set
-        }
-        fetch(`/Home/GetStatus?processId=${processId}`)
-            .then(response => response.json())
-            .then(data => {
-                const feedbackDiv = document.getElementById('feedback');
-                if (data.status) {
-                    feedbackDiv.style.display = 'block';
-                    feedbackDiv.textContent = data.status;
-                }
-            })
-            .catch(error => console.error('Error fetching status:', error));
-    }
+    $('#submitNetworkDeployer').click(function (e) {
+        e.preventDefault(); // Voorkomt standaard formulierverzending
 
-    // Wait for the DOM to load
-    document.addEventListener('DOMContentLoaded', () => {
-        const form = document.getElementById('NetworkDeployerForm');
-        const feedbackDiv = document.getElementById('feedback');
+        const formData = new FormData($('#NetworkDeployerForm')[0]); // Formulierdata ophalen
 
-        // Hide feedback section initially
-        feedbackDiv.style.display = 'none';
-
-        // Add a submit event listener to the form
-        form.addEventListener('submit', (event) => {
-            // Show the feedback div and start fetching status updates
-            feedbackDiv.style.display = 'block';
-            feedbackDiv.textContent = 'Uploading file and starting the deployment process...';
-
-            // Start the periodic status fetch
-            setInterval(getStatus, 1000);
+        $.ajax({
+            url: '/Home/NetworkDeployer', // Endpoint van de actie
+            type: 'POST',
+            data: formData,
+            processData: false, // Nodig voor bestanden
+            contentType: false, // Nodig voor bestanden
+            success: function (response) {
+                // Toon succesbericht
+                $('#feedback').html('<div class="alert alert-success">Bestand succesvol geüpload: ' + response.message + '</div>');
+            },
+            error: function (xhr) {
+                // Toon foutbericht
+                $('#feedback').html('<div class="alert alert-danger">Er is een fout opgetreden tijdens het uploaden: ' + xhr.responseText + '</div>');
+            }
         });
     });
-</script>
+    //thanks chatgpt
+    function pollStatus() {
+        $.get('/Home/GetStatus', function (data) {
+            $('#feedback').html(data.status);
+            if (data.status !== "Verwerking voltooid!") {
+                setTimeout(pollStatus, 1000); // Wacht 1 seconde en vraag opnieuw
+            }
+        });
+    }
 
+    $('#submitNetworkDeployer').click(function () {
+        const formData = new FormData($('#NetworkDeployerForm')[0]);
+
+        $.ajax({
+            url: '/Home/NetworkDeployer',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function () {
+                pollStatus(); // Start polling
+            },
+            error: function () {
+                alert('Er is een fout opgetreden tijdens het uploaden.');
+            }
+        });
+    });
+
+</script>

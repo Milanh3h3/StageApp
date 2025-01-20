@@ -1,18 +1,21 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Shared;
+using NuGet.Common;
 using StageApp.Excel;
 using StageApp.Meraki_API;
 using StageApp.Models;
-using System.Collections.Concurrent;
+using StageApp.Refactoring;
 using System.Diagnostics;
+using System.Security.Claims;
 
 namespace StageApp.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-        private MerakiApiHelper? _merakiApi; 
-        private static readonly ConcurrentDictionary<string, string> StatusMessages = new();
+        private MerakiApiHelper? _merakiApi;
+        public static string _statusMessage = string.Empty;
         public HomeController(ILogger<HomeController> logger)
         {
             _logger = logger;
@@ -55,7 +58,15 @@ namespace StageApp.Controllers
             }
             return false;
         }
-
+        private bool InitializeMerakiApiForHomrRF()
+        {
+            if (Request.Cookies.TryGetValue("API_Key", out string? apiKey) && !string.IsNullOrEmpty(apiKey))
+            {
+                HomeRF._merakiApi = new MerakiApiHelper(apiKey);
+                return true;
+            }
+            return false;
+        }
         public IActionResult NetworkDeployer()
         {
             if (!InitializeMerakiApi())
@@ -67,8 +78,9 @@ namespace StageApp.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult NetworkDeployer(IFormFile excelFile)
+        public async Task<IActionResult> NetworkDeployer(IFormFile excelFile)
         {
+
             if (!InitializeMerakiApi())
             {
                 return RedirectToAction("Index", "Home");
@@ -80,21 +92,7 @@ namespace StageApp.Controllers
                 return RedirectToAction("NetworkDeployer");
             }
 
-            // Generate a unique ID for this deployment process
-            string processId = Guid.NewGuid().ToString();
-            StatusMessages[processId] = "Processing started...";
-
-            // Run the deployment logic in a background task
-            Task.Run(() => ProcessNetworkDeployment(excelFile, processId));
-
-            // Pass the process ID back to the frontend for status updates
-            ViewBag.ProcessId = processId;
-            return View();
-        }
-
-        private async Task ProcessNetworkDeployment(IFormFile excelFile, string processId)
-        {
-            string tempFilePath = Path.GetTempFileName();
+            var tempFilePath = Path.GetTempFileName();
             try
             {
                 using (var stream = new FileStream(tempFilePath, FileMode.Create))
@@ -104,12 +102,18 @@ namespace StageApp.Controllers
 
                 var excelData = ExcelReader.GetExcelTabs(tempFilePath);
                 var organizations = await _merakiApi.GetOrganizations();
-                UpdateStatus(processId, "Bestand aan het controleren");
-                string Inputcontrolresult = UserInputControl.InputControlNetworkDeployer(excelData, organizations);
-                if (Inputcontrolresult == string.Empty)
+                _statusMessage = "Bestand aan het controleren";
+                string Inputcontrolresult = UserInputControl.InputControlNetworkDeployer(excelData, organizations); 
+                if ( Inputcontrolresult == string.Empty)
                 {
-                    UpdateStatus(processId, "Bestand succesvol ingelezen en gecontrolleerd");
-                    UpdateStatus(processId, "Bezig met het maken van netwerken");
+                    _statusMessage = "Bestand succesvol ingelezen en gecontrolleerd";
+                    if (excelData == null || excelData.Count == 0)
+                    {
+                        ModelState.AddModelError("", "The uploaded file is empty or invalid.");
+                        return RedirectToAction("NetworkDeployer");
+                    }
+
+                    _statusMessage = "Bezig met het maken van netwerken";
                     var networksFromExcel = excelData["Networks"];
                     List<string> usedOrganizationIds = new List<string>(); // bijhouden voor netwerk ID's terug te vinden
                     foreach (var network in networksFromExcel)
@@ -119,11 +123,11 @@ namespace StageApp.Controllers
                         {
                             usedOrganizationIds.Add(organizationId);
                         }
-                        string[] productTypes = GetProductTypes(excelData, network[1].Trim());
-                        await _merakiApi.CreateNetworkAsync(organizationId, network[1].Trim(), productTypes, network[2].Trim());
+                        string[] productTypes = HomeRF.GetProductTypes(excelData, network[1].Trim());
+                        _merakiApi.CreateNetworkAsync(organizationId, network[1].Trim(), productTypes, network[2].Trim());
                         await Task.Delay(350); // ongeveer 3 calls per second
                     }
-                    UpdateStatus(processId, "Bezig met het achterhalen van networkIDs");
+                    _statusMessage = "Bezig met het achterhalen van networkIDs";
                     List<(string NetworkId, string NetworkName)> networks = [];
                     foreach (var OrgId in usedOrganizationIds)
                     {
@@ -131,7 +135,7 @@ namespace StageApp.Controllers
                         await Task.Delay(350); // ongeveer 3 calls per second
                     }
 
-                    UpdateStatus(processId, "Bezig met het claimen van devices");
+                    _statusMessage = "Bezig met het claimen van devices";
                     var devices = excelData["Devices"];
                     var devicesByNetwork = new Dictionary<string, List<string>>();
                     foreach (var device in devices)
@@ -151,10 +155,11 @@ namespace StageApp.Controllers
                         await _merakiApi.ClaimDevicesAsync(networkId, serialNumbers);
                         await Task.Delay(350); // ongeveer 3 calls per second
                     }
-                    UpdateStatus(processId, "Aan het wachten totdat Meraki de devices heeft geclaimed.");
+                    _statusMessage = "Aan het wachten totdat Meraki de devices heeft geclaimed.";
+                    InitializeMerakiApiForHomrRF();
                     string LastDeviceSerial = devices.FindLast(device => device.Length > 8)?[8];
-                    WaitForMeraki(processId, LastDeviceSerial);
-                    UpdateStatus(processId, "Bezig met devices hun netwerkinformatie geven");
+                    HomeRF.WaitForMeraki(LastDeviceSerial);
+                    _statusMessage = "Bezig met devices hun netwerkinformatie geven";
                     //IP-Address	SubnetMask	Gateway	DNS1	DNS2	VLAN
                     foreach (var device in devices)
                     {
@@ -162,7 +167,7 @@ namespace StageApp.Controllers
                         await _merakiApi.SetDeviceWAN1Async(device[8].Trim(), Int32.Parse(device[7].Trim()), device[4].Trim(), device[2].Trim(), device[3].Trim(), DNSs);
                         await Task.Delay(350); // ongeveer 3 calls per second
                     }
-                    UpdateStatus(processId,"Bezig met devices hun informatie geven");
+                    _statusMessage = "Bezig met devices hun informatie geven";
                     //Device_name   Location	Notes
                     foreach (var device in devices)
                     {
@@ -170,14 +175,36 @@ namespace StageApp.Controllers
                         await Task.Delay(350); // ongeveer 3 calls per second
                     }
                 }
-                else
-                {
-                    UpdateStatus(processId, Inputcontrolresult);
+                else 
+                {  // Beste stukje code
+                    _statusMessage = Inputcontrolresult;
+                    _statusMessage = Inputcontrolresult + ". Redirecting in 10...";
+                    await Task.Delay(1000);
+                    _statusMessage = Inputcontrolresult + ". Redirecting in 9...";
+                    await Task.Delay(1000);
+                    _statusMessage = Inputcontrolresult + ". Redirecting in 8...";
+                    await Task.Delay(1000);
+                    _statusMessage = Inputcontrolresult + ". Redirecting in 7...";
+                    await Task.Delay(1000);
+                    _statusMessage = Inputcontrolresult + ". Redirecting in 6...";
+                    await Task.Delay(1000);
+                    _statusMessage = Inputcontrolresult + ". Redirecting in 5...";
+                    await Task.Delay(1000);
+                    _statusMessage = Inputcontrolresult + ". Redirecting in 4...";
+                    await Task.Delay(1000);
+                    _statusMessage = Inputcontrolresult + ". Redirecting in 3...";
+                    await Task.Delay(1000);
+                    _statusMessage = Inputcontrolresult + ". Redirecting in 2...";
+                    await Task.Delay(1000);
+                    _statusMessage = Inputcontrolresult + ". Redirecting in 1...";
+                    await Task.Delay(1000);
+                    return RedirectToAction("NetworkDeployer");
                 }
             }
             catch (Exception ex)
             {
-                UpdateStatus(processId, $"Error: {ex.Message}");
+                ModelState.AddModelError("", $"An error occurred while processing the file: {ex.Message}");
+                return RedirectToAction("NetworkDeployer");
             }
             finally
             {
@@ -186,74 +213,14 @@ namespace StageApp.Controllers
                     System.IO.File.Delete(tempFilePath);
                 }
             }
-        }
-        public string[] GetProductTypes(Dictionary<string, List<string[]>> excelData, string network)
-        {
-            var devices = excelData["Devices"];
-            var devicesByNetwork = new List<string>();
-            foreach (var device in devices)
-            {
-                if (device[0] == network)
-                {
-                    devicesByNetwork.Add(device[1]);
-                }
-            }
-            var productTypes = new List<string>();
-            foreach (string device in devicesByNetwork)
-            {
-                string lastFiveLetters = device.Substring(device.Length - 5);
-                string productTypeLetters = lastFiveLetters.Substring(0, 2);
 
-                if ((productTypeLetters == "RT" || productTypeLetters == "FW") && !productTypes.Contains("appliance"))
-                {
-                    productTypes.Add("appliance");
-                }
-                else if ((productTypeLetters == "SW" || productTypeLetters == "MS") && !productTypes.Contains("switch"))
-                {
-                    productTypes.Add("switch");
-                }
-                else if (productTypeLetters == "RT" && !productTypes.Contains("wireless"))
-                {
-                    productTypes.Add("wireless");
-                }
-            }
-            return productTypes.ToArray();
+            return RedirectToAction(nameof(Index));
         }
-        public async void WaitForMeraki(string serial, string processId)
-        {
-            while (true)
-            {
-                try
-                {
-                    await _merakiApi.GetDeviceNameAsync(serial);
-                    UpdateStatus(processId, "Device geclaimed!");
-                    return;
-                }
-                catch
-                {
-                    for (int i = 60; i > 0; i--)
-                    {
-                        await Task.Delay(1000);
-                        UpdateStatus(processId, $"Aan het wachten totdat Meraki de devices heeft geclaimed. Retrying in {i}s");
-                    }
-
-                }
-            }
-        }
-
-        public void UpdateStatus(string processId, string message)
-        {
-            StatusMessages[processId] = message;
-        }
-
+        
         [HttpGet]
-        public IActionResult GetStatus(string processId)
+        public IActionResult GetStatus()
         {
-            if (StatusMessages.TryGetValue(processId, out string? status))
-            {
-                return Ok(new { status });
-            }
-            return NotFound(new { status = "Invalid process ID" });
+            return Ok(new { status = _statusMessage });
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

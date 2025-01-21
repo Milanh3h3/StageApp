@@ -112,7 +112,7 @@ namespace StageApp.Meraki_API
 
         public async Task SetDeviceWAN1Async(string serialNumber, int vlan, string staticGatewayIp, string staticIp, string staticSubnetMask, string[] staticDns)
         {
-            var wan1 = new{ vlan, staticGatewayIp, staticIp, staticSubnetMask, usingStaticIp = true, staticDns };
+            WAN wan1 = new WAN(vlan, staticGatewayIp, staticIp, staticSubnetMask, staticDns, true);
             var url = $"{BaseUrl}/devices/{serialNumber}/managementInterface";
             var payload = new {wan1};
 

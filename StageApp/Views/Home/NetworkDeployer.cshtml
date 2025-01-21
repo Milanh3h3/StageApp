@@ -15,7 +15,6 @@
                     <strong>Error:</strong> Please correct the errors below.
                 </div>
             }
-            <div id="feedback"></div>
             <p>Make sure the excel file looks like this: doe maar wat</p>
             <p>Note: multiple devices can be claimed in different networks. For longer files make sure to refresh the API Key before Confirming.</p>
             <form asp-action="NetworkDeployer" asp-controller="Home" method="post" enctype="multipart/form-data" id="NetworkDeployerForm">
@@ -27,5 +26,12 @@
                 <button type="submit" id="submitNetworkDeployer" class="btn btn-primary">Confirm NetworkDeployer</button>
             </form>
         </div>
+
+        <div class="col-md-6 form-section">
+            <h3> Feedback:</h3>
+            <div id="feedback" class="feedback-container"></div>
+        </div>
     </div>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+<script src ="~/js/signalr/feedbackHub.js"></script>

@@ -4,6 +4,8 @@ using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Sha
 using StageApp.Controllers;
 using StageApp.Meraki_API;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using StageApp.Hubs;
 
 namespace StageApp.Refactoring
 {
@@ -11,6 +13,7 @@ namespace StageApp.Refactoring
     {
 
         public static MerakiApiHelper? _merakiApi;
+
         public static string[] GetProductTypes(Dictionary<string, List<string[]>> excelData, string network)
         {
             var devices = excelData["Devices"];
@@ -43,14 +46,14 @@ namespace StageApp.Refactoring
             }
             return productTypes.ToArray();
         }
-        public static async void WaitForMeraki(string serial)
+        public static async void WaitForMeraki(string serial, IHubContext<FeedbackHub> _hubContext)
         {
             while (true)
             {
                 try
                 {
                     await _merakiApi.GetDeviceNameAsync(serial);
-                    HomeController._statusMessage = "Device geclaimed!";
+                    await _hubContext.Clients.All.SendAsync("ReceiveFeedback", "Devices geclaimed!");
                     return;
                 }
                 catch
@@ -58,7 +61,7 @@ namespace StageApp.Refactoring
                     for (int i = 60; i > 0; i--)
                     {
                         await Task.Delay(1000);
-                        HomeController._statusMessage = $"Aan het wachten totdat Meraki de devices heeft geclaimed. Retrying in {i}s";
+                        await _hubContext.Clients.All.SendAsync("ReceiveFeedback", $"Aan het wachten totdat Meraki de devices heeft geclaimed. Retrying in {i}s");
                     }
 
                 }

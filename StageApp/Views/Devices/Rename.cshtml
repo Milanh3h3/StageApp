@@ -7,6 +7,8 @@
 <div class="container form-container">
     <div class="row">
         <div class="col-md-6 form-section">
+            <h3>Rename Devices</h3>
+            <p class="text-center">Note: You can rename multiple devices by entering their serial numbers, one per line.</p>
             @if (!string.IsNullOrEmpty(ViewBag.Message))
             {
                 <div class="alert alert-success">
@@ -20,8 +22,6 @@
                     <strong>Error:</strong> Please correct the errors below.
                 </div>
             }
-
-            <p class="text-center">Note: You can rename multiple devices by entering their serial numbers, one per line.</p>
             <form asp-action="Rename" asp-controller="Devices" method="post">
                 <div class="form-group">
                     <label for="SerialNumbers">Serial Numbers</label>

@@ -29,7 +29,7 @@ namespace StageApp.Meraki_API
             var response = await _httpClient.PostAsync(url, GetJsonContent(payload));
             response.EnsureSuccessStatusCode();
         }
-        public async Task CreateNetworkAsync(string organizationId, string name, Array productTypes, string timezone = "America/Los_Angeles")
+        public async Task CreateNetworkAsync(string organizationId, string name, Array productTypes, string timezone)
         {
             var url = $"{BaseUrl}/organizations/{organizationId}/networks";
             var payload = new{ name, productTypes, timezone };

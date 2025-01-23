@@ -11,11 +11,11 @@ using StageApp.Meraki_API;
 
 namespace StageApp.Controllers
 {
-    public class OrganisationsController : Controller
+    public class OrganizationsController : Controller
     {
         private MerakiApiHelper? _merakiApi;
 
-        public OrganisationsController()
+        public OrganizationsController()
         {
         }
 

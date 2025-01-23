@@ -246,15 +246,15 @@ namespace StageApp.Controllers
                 {
                     List<string[]> NamesAndSerials = [];
                     string[] Header = ["Serial Numbers", "Old Names", "New Names"];
-                    NamesAndSerials.Append(Header);
+                    NamesAndSerials.Add(Header);
                     foreach (var (serial, name) in model.SerialNumbers.Zip(model.NewNames))
                     {
                         string OldName = await _merakiApi.GetDeviceNameAsync(serial);
                         await Task.Delay(350); // ongeveer 3 calls per second
-                        await _merakiApi.RenameDeviceAsync(name, serial);
+                        await _merakiApi.RenameDeviceAsync(serial, name);
                         await Task.Delay(350); // ongeveer 3 calls per second
                         string[] DataRow = [serial, OldName, name];
-                        NamesAndSerials.Append(DataRow);
+                        NamesAndSerials.Add(DataRow);
                     }
                     string backupDirectory = Path.Combine("RenameBackups");
                     string fileName = $"Backup_{DateTime.Now:yyyy-MM-dd_HH-mm}.csv";
@@ -340,7 +340,7 @@ namespace StageApp.Controllers
                     }
                     List<string[]> NamesAndSerials = [];
                     string[] Header = ["Serial Numbers", "Old Names", "New Names"];
-                    NamesAndSerials.Append(Header);
+                    NamesAndSerials.Add(Header);
                     foreach (var row in excelData)
                     {
                         if (row.Length < 2) continue;

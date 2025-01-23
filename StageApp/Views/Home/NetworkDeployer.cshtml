@@ -1,7 +1,11 @@
-﻿<h1>NetworksDeployer</h1>
+﻿@{
+    ViewData["Title"] = "NetworksDeployer";
+}
+<h1>NetworksDeployer</h1>
 <div class="container form-container">
     <div class="row">
         <div class="col-md-6 form-section">
+            <h3>NetworksDeployer</h3>
             @if (!string.IsNullOrEmpty(ViewBag.Message))
             {
                 <div class="alert alert-success">
@@ -15,7 +19,7 @@
                     <strong>Error:</strong> Please correct the errors below.
                 </div>
             }
-            <p>Make sure the excel file looks like this: doe maar wat</p>
+            <p>Make sure the excel file looks like this:</p>
             <p>Note: multiple devices can be claimed in different networks. For longer files make sure to refresh the API Key before Confirming.</p>
             <form asp-action="NetworkDeployer" asp-controller="Home" method="post" enctype="multipart/form-data" id="NetworkDeployerForm">
                 <div class="form-group">

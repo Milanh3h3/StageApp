@@ -31,6 +31,34 @@ body {
     border-radius: 8px;
     background-color: #f9f9f9;
 }
+h3 {
+    text-align: center;
+}
+p {
+    text-align: center;
+}
+
+button[type="submit"] {
+    display: inline-block;
+    width: 100%; /* Full width */
+    font-size: 1rem; /* Adjust font size if needed */
+    text-align: center; /* Centers text */
+    vertical-align: middle;
+    margin-top: 10px;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+    button[type="submit"]:hover,
+    button[type="submit"]:focus {
+        background-color: #0056b3; /* Darker primary color */
+        border-color: #0056b3; /* Darker border color */
+        color: white;
+    }
+
+    button[type="submit"]:disabled {
+        cursor: not-allowed;
+        opacity: 0.65;
+    }
+
 
 .toggle-visibility {
     cursor: pointer;

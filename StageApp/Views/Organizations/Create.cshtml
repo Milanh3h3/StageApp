@@ -1,0 +1,42 @@
+﻿@model StageApp.ViewModels.CreateOrganizationViewModel
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create Organization</h1>
+<div class="container form-container">
+    <div class="row">
+        <div class="col-md-6 form-section">
+            <h3>Create Organization</h3>
+            @if (!string.IsNullOrEmpty(ViewBag.Message))
+            {
+                <div class="alert alert-success">
+                    @ViewBag.Message
+                </div>
+            }
+
+            @if (ViewData.ModelState.Count > 0 && !ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    <strong>Error:</strong> Invalid API key or User not authorised.
+                </div>
+            }
+
+            <form asp-action="Create" asp-controller="Organisations" method="post">
+                <div class="form-group">
+                    <label for="Name">Organization Name</label>
+                    <input type="text" class="form-control" id="Name" name="Name" required />
+                </div>
+                <button type="submit" class="btn btn-primary">Create</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
+

@@ -37,9 +37,7 @@ h3 {
 p {
     text-align: center;
 }
-button {
-    width: 100%; /* Full width */
-}
+
 button[type="submit"] {
     display: inline-block;
     width: 100%; /* Full width */

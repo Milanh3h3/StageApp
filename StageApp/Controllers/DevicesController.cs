@@ -90,6 +90,7 @@ namespace StageApp.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Claim(ClaimDevicesViewModel model)
         {
+            model.SerialNumbers = model.SerialNumbers.SelectMany(s => s.Split(new[] { '\r', '\n', ',' }, StringSplitOptions.RemoveEmptyEntries)).ToList();
             if (!ModelState.IsValid)
             {
                 return View(model);
@@ -437,7 +438,7 @@ namespace StageApp.Controllers
             {
                 foreach (string serial in model.SerialNumbers)
                 {
-                    await _merakiApi.SetDeviceAddressAsync(serial, model.Address, model.Notes);
+                    await _merakiApi.SetDeviceAddressAsync(serial, model.Address.Trim(), model.Notes.Trim());
                     await Task.Delay(350); // ongeveer 3 calls per second
                 }
                 ViewBag.Message = "Devices location set successfully";
@@ -481,9 +482,9 @@ namespace StageApp.Controllers
                 foreach (var row in excelData)
                 {
                     if (row.Length < 2) continue;
-                    string serial = row[0];
-                    string Address = row[1];
-                    string Notes = row[2];
+                    string serial = row[0].Trim();
+                    string Address = row[1].Trim();
+                    string Notes = row[2].Trim();
                     if (string.IsNullOrEmpty(serial)) continue;
                     await _merakiApi.SetDeviceAddressAsync(serial, Address, Notes);
                     await Task.Delay(350); // ongeveer 3 calls per second

@@ -41,7 +41,7 @@ namespace StageApp.Meraki_API
         public async Task ClaimDevicesAsync(string networkId, List<string> serialNumbers)
         {
             var url = $"{BaseUrl}/networks/{networkId}/devices/claim";
-            var payload = new { serials = serialNumbers };
+            var payload = new { serials = serialNumbers.ToArray() };
 
             var response = await _httpClient.PostAsync(url, GetJsonContent(payload));
             response.EnsureSuccessStatusCode();

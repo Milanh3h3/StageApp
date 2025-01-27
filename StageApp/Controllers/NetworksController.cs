@@ -63,7 +63,7 @@ namespace StageApp.Controllers
             try
             {
                 string[] productTypes = model.SelectedNetworkTypes.ToArray();
-                await _merakiApi.CreateNetworkAsync(model.OrganizationId, model.Name, productTypes, model.Timezone);
+                await _merakiApi.CreateNetworkAsync(model.OrganizationId, model.Name.Trim(), productTypes, model.Timezone);
                 ViewBag.Message = $"Network '{model.Name}' created successfully!";
                 var organizations = await _merakiApi.GetOrganizations();
                 model.Organizations = organizations.Select(o => new SelectListItem { Value = o.OrganizationId, Text = o.OrganizationName });

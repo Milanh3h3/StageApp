@@ -48,7 +48,7 @@ namespace StageApp.Controllers
                 Secure = true,
             };
 
-            Response.Cookies.Append("API_Key", API_key, options);
+            Response.Cookies.Append("API_Key", API_key.Trim(), options);
 
             return RedirectToAction(nameof(Index));
         }

@@ -20,9 +20,9 @@
                 </div>
             }
             <p>Make sure the excel file looks like this:</p>
-            <button asp-action="Download" class="btn btn-primary" style="width: 100%;">
+            <a href="/files/Voorbeeld voor NetworkDeployer.xlsx" class="btn btn-primary" style="width: 100%;" download>
                 Download Voorbeeld
-            </button>
+            </a>
             <p>Note: multiple devices can be claimed in different networks. For longer files make sure to refresh the API Key before Confirming.</p>
             <form asp-action="NetworkDeployer" asp-controller="Home" method="post" enctype="multipart/form-data" id="NetworkDeployerForm">
                 <div class="form-group">

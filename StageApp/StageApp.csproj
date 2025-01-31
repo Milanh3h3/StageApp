@@ -26,4 +26,8 @@
     <Folder Include="RenameBackups\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="wwwroot\files\Voorbeeld voor NetworkDeployer.xlsx" />
+  </ItemGroup>
+
 </Project>

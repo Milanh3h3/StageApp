@@ -208,15 +208,6 @@ namespace StageApp.Controllers
             return RedirectToAction("NetworkDeployer");
         }
 
-        [HttpGet]
-        public IActionResult Download()
-        {
-            string Directory = Path.Combine("Voorbeeld voor NetworkDeployer.xlsx");
-            var fileBytes = System.IO.File.ReadAllBytes(Directory);
-            var fileName = Path.GetFileName(Directory);
-            return File(fileBytes, "application/octet-stream", fileName);
-        }
-
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
